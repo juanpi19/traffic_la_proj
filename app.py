@@ -4,10 +4,18 @@ import geocoder
 import sqlite3
 from datetime import datetime, timedelta
 import pytz  # for working with time zones
-from pw import bing_map_api_endpoint, parking_meter_occupancy_api_endpoint
+#from pw import bing_map_api_endpoint, parking_meter_occupancy_api_endpoint
 from utility import get_coordinates, calculates_distance_and_driving_time_from_point_a_to_point_b, api_request, \
                     ingests_parking_meter_live_data_to_parking_meter_occupancy_live_t, haversine, \
                     fetch_autocomplete_suggestions, joins_street_parking_inventory_with_live_api_data
+
+
+app_token = st.secrets['app_token']
+username = st.secrets['username']
+password = st.secrets['password']
+weather_key_api_endpoint = st.secrets['weather_key_api_endpoint']
+bing_map_api_endpoint = st.secrets['bing_map_api_endpoint']
+parking_meter_occupancy_api_endpoint = st.secrets['parking_meter_occupancy_api_endpoint']
 
 
 st.set_page_config(layout="wide")

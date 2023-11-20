@@ -1,11 +1,20 @@
 import sqlite3
 import pandas as pd
 from sodapy import Socrata
-from pw import app_token, username, password, weather_key_api_endpoint, bing_map_api_endpoint, parking_meter_occupancy_api_endpoint
+# from pw import app_token, username, password, weather_key_api_endpoint, bing_map_api_endpoint, parking_meter_occupancy_api_endpoint
 import requests
+import streamlit as st
 from datetime import datetime
 import pytz  # for working with time zones
 from math import radians, sin, cos, sqrt, atan2
+
+
+app_token = st.secrets['app_token']
+username = st.secrets['username']
+password = st.secrets['password']
+weather_key_api_endpoint = st.secrets['weather_key_api_endpoint']
+bing_map_api_endpoint = st.secrets['bing_map_api_endpoint']
+parking_meter_occupancy_api_endpoint = st.secrets['parking_meter_occupancy_api_endpoint']
 
 
 
