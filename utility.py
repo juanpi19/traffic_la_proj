@@ -357,14 +357,3 @@ def joins_street_parking_inventory_with_live_api_data() -> pd.DataFrame:
     final_df['lon'] = [float(i) for i in final_df['long']]
     return final_df
 
-# import sqlite3
-# conn = sqlite3.connect('/Users/juanherrera/Desktop/MacBook Pro/Data Science/Projects/traffic_la_project/traffic.db')
-# cursor = conn.cursor()
-
-# q = '''SELECT *
-#         FROM parking_meter_occupancy_live pm
-#         INNER JOIN metered_parking_inventory mi
-#         ON pm.space_id = mi.space_id
-#         '''
-
-# print(pd.read_sql_query(q, conn))
