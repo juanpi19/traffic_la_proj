@@ -63,7 +63,6 @@ def api_request(api_endpoint: str, api_name: str) -> pd.DataFrame:
         temp = weather['main']['temp'] - 273.15
         condition = weather['weather'][0]['description']
         df = pd.DataFrame({'condition': condition, 'temp': temp, 'eventtime_utc': datetime.now(pytz.utc).isoformat()}, index=[1])
-        #df['eventtime_utc'] = pd.to_datetime(df['eventtime'])
 
         return df #pd.DataFrame({'condition': condition, 'temp': temp}, index=[1])
 
@@ -357,7 +356,9 @@ def joins_street_parking_inventory_with_live_api_data() -> pd.DataFrame:
             '''
 
     api_df = api_request(api_endpoint=parking_meter_occupancy_api_endpoint, api_name='Socrata')
+    api_weather_df = api_request(api_endpoint=weather_key_api_endpoint, api_name='weather')
     ingests_parking_meter_live_data_to_parking_meter_occupancy_live_t(api_df) 
+    ingests_weather_data_to_weather_t(api_weather_df)
 
     inventory_df = pd.read_sql_query(q, conn)
     final_df = pd.merge(api_df, inventory_df, how='inner', left_on='spaceid', right_on='space_id')

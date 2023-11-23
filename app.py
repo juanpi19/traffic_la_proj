@@ -162,8 +162,6 @@ else:
 
 
             if distance and duration:
-                # map_available_parking.write(f"🏁 distance in kilometers {distance}")
-                # map_available_parking.write(f"🚗 time in minutes {round(duration)}")
 
             
                 lat = [float(from_address_coordinates.split(',')[0]), float(to_address_coordinates.split(',')[0])]
