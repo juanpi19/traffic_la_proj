@@ -25,6 +25,10 @@ print(weather)
 # print(weather_json['main']['humidity']) # is_rain
 
 
+# Get rid of uvindex, conditions, description, feelslikemax, feelslikemin, 
+# KEEP: tempmax, tempmin, temp, feelslike, humidity
+
+
 ## weekday, hour, is_am, is_work, time_of_day_bin, is_weekend, avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6, hour_weekend_interaction
 # weather_range, hour_rain_interaction, cluster_condition
 
