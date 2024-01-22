@@ -1,8 +1,13 @@
 from utility import api_request
 import datetime
 import requests
-weather_json = api_request("37012b8dfefdabc9cd6f71e8d652545d", 'weather')
-# print(weather_json)
+# weather_json = api_request("37012b8dfefdabc9cd6f71e8d652545d", 'weather')
+
+url = 'https://api.openweathermap.org/data/2.5/weather'
+params = {'APPID': "37012b8dfefdabc9cd6f71e8d652545d", 'q': 'Los Angeles', 'units': 'celsius'}
+response = requests.get(url, params=params)
+weather = response.json()
+print(weather)
 
 # # tempmax, tempmin, temp, feelslikemax, feelslikemin, feelslike, humidity, is_rain, uvindex, conditions, description
 
