@@ -81,9 +81,6 @@ if st.session_state.initial_map:
 
 if st.session_state.current_location != '':
 
-    #st.write('hello')
-
-    #st.session_state.initial_map = False
 
     if to_address_user_input and radius:
 
@@ -144,11 +141,14 @@ if st.session_state.current_location != '':
                     map_available_parking.write(f"🚗 time in minutes: {round(duration)}, get there by {(datetime.now() + timedelta(minutes=duration)).time()}")
                     map_available_parking.write(available_parking_df)
 
+                    map_available_parking.write(available_parking_df.columns)
 
 
+
+
+# Manually Enters Address
+                    
 else:
-
-   # st.session_state.initial_map = False
 
     if from_address_user_input and to_address_user_input and radius:
 
@@ -209,6 +209,10 @@ else:
 
                     map_available_parking.write(f"🚗 time in minutes: {round(duration)}, get there by {(datetime.now() + timedelta(minutes=duration)).time()}")
                     map_available_parking.write(available_parking_df)
+
+                    map_available_parking.write(final_df)
+
+
 
 
 

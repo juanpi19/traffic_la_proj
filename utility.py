@@ -67,7 +67,7 @@ def api_request(api_endpoint: str, api_name: str) -> pd.DataFrame:
         condition = weather['weather'][0]['description']
         df = pd.DataFrame({'condition': condition, 'temp': temp, 'eventtime_utc': datetime.now(pytz.utc).isoformat()}, index=[1])
 
-        return df #pd.DataFrame({'condition': condition, 'temp': temp}, index=[1])
+        return df #, weather #pd.DataFrame({'condition': condition, 'temp': temp}, index=[1])
 
 
 
@@ -378,14 +378,14 @@ with open('mapping_dictionary.pkl', 'rb') as pickle_file:
     mapping_dict = pk.load(pickle_file)
 
 
-coordinates_mapping_df = pd.read_csv('coordinates_mapping.csv')
+coordinates_mapping_df = pd.read_csv('coordinates_mapping_compressed.csv')
 
-print(coordinates_mapping_df[(coordinates_mapping_df['lat'] == 34.041346) & (coordinates_mapping_df['long'] == -118.260304)]['cluster_coordinates'].unique()[0])
-print()
+# print(coordinates_mapping_df[(coordinates_mapping_df['lat'] == 34.041346) & (coordinates_mapping_df['long'] == -118.260304)]['cluster_coordinates'].unique()[0])
+# print()
 
 
-print(mapping_dict.keys())
-print(mapping_dict['time_of_day_bin'])
+# print(mapping_dict.keys())
+# print(mapping_dict['time_of_day_bin'])
 
 def ml_model_features_input(SpaceID: str,
                             OccupancyState: str,
