@@ -1,5 +1,7 @@
 import sqlite3
 import pandas as pd
+import numpy as np
+import pickle as pk
 from sodapy import Socrata
 # from pw import app_token, username, password, weather_key_api_endpoint, bing_map_api_endpoint, parking_meter_occupancy_api_endpoint
 import requests
@@ -7,6 +9,7 @@ import streamlit as st
 from datetime import datetime
 import pytz  # for working with time zones
 from math import radians, sin, cos, sqrt, atan2
+
 
 
 app_token = st.secrets['app_token']
@@ -366,4 +369,88 @@ def joins_street_parking_inventory_with_live_api_data() -> pd.DataFrame:
     final_df['lat'] = [float(i) for i in final_df['lat']]
     final_df['lon'] = [float(i) for i in final_df['long']]
     return final_df
+
+
+
+
+# Read data from the pickle file
+with open('mapping_dictionary.pkl', 'rb') as pickle_file:
+    mapping_dict = pk.load(pickle_file)
+
+
+coordinates_mapping_df = pd.read_csv('coordinates_mapping.csv')
+
+print(coordinates_mapping_df[(coordinates_mapping_df['lat'] == 34.041346) & (coordinates_mapping_df['long'] == -118.260304)]['cluster_coordinates'].unique()[0])
+print()
+
+
+print(mapping_dict.keys())
+print(mapping_dict['time_of_day_bin'])
+
+def ml_model_features_input(SpaceID: str,
+                            OccupancyState: str,
+                            block_face: str,
+                            meter_type: str,
+                            rate_type: str,
+                            rate_range: str,
+                            metered_time_limit: str,
+                            day: int,
+                            tempmax: float,
+                            tempmin: float,
+                            temp: float,
+                            feelslikemax: float,
+                            feelslikemin: float,
+                            feelslike: float,
+                            humidity: float,
+                            is_rain: int,
+                            uvindex: int,
+                            conditions: str,
+                            description: str,
+                            weekday: int,
+                            hour: int,
+                            is_am: int,
+                            is_work: int,
+                            time_of_day_bin: str,
+                            is_weekend: int,
+                            avg_time_in_occupancy_past_3: float,
+                            avg_time_in_occupancy_past_6: float,
+                            hour_weekday_interaction: int,
+                            weather_range: float, 
+                            hour_rain_interaction: int,
+                            lat: float,
+                            long: float
+                            ):
+    
+    '''
+
+    This functions takes all the raw inputs which are then transformed and returned as an array that will help our model make predictions
+
+    These are the encoded features:
+    dict_keys(['SpaceID', 'OccupancyState', 'block_face', 'is_am', 'time_of_day_bin', 'conditions', 'description', 'meter_type', 'rate_type', 'rate_range', 'metered_time_limit'])
+    
+    
+    '''
+    spaceid_feature = mapping_dict['SpaceID'][SpaceID]
+    occupancy_state_feature = mapping_dict['OccupancyState'][OccupancyState]
+    block_face_feature = mapping_dict['block_face'][block_face]
+    time_of_day_bin_feature = mapping_dict['time_of_day_bin'][time_of_day_bin]
+    conditions_feature = mapping_dict['conditions'][conditions]
+    description_feature = mapping_dict['description'][description]
+    meter_type_feature = mapping_dict['meter_type'][meter_type]
+    rate_type_feature = mapping_dict['rate_type'][rate_type]
+    rate_range_feature = mapping_dict['rate_range'][rate_range]
+    metered_time_limit_feature = mapping_dict['metered_time_limit'][metered_time_limit]
+
+
+    # cluster
+    cluster = coordinates_mapping_df[(coordinates_mapping_df['lat'] == lat) & (coordinates_mapping_df['long'] == long)]['cluster_coordinates'].unique()[0]
+
+
+    features_lst = np.array([spaceid_feature, occupancy_state_feature, block_face_feature, meter_type_feature, rate_type_feature, rate_range_feature, metered_time_limit_feature,
+                             day, tempmax, tempmin, temp, feelslikemax, feelslikemin, feelslike, humidity, is_rain, uvindex, conditions_feature, description_feature,
+                             weekday, hour, is_am, is_work, time_of_day_bin_feature, is_weekend, avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6,
+                             hour_weekday_interaction, weather_range, hour_rain_interaction, cluster])
+    
+
+    return features_lst
 
