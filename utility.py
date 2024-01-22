@@ -371,7 +371,9 @@ def joins_street_parking_inventory_with_live_api_data() -> pd.DataFrame:
     return final_df
 
 
-
+######################## 
+######### MODEL FEATURES
+#########################
 
 # Read data from the pickle file
 with open('mapping_dictionary.pkl', 'rb') as pickle_file:
@@ -454,3 +456,75 @@ def ml_model_features_input(SpaceID: str,
 
     return features_lst
 
+
+
+
+def collecting_model_features(api_endpoint_weather: str) -> dict: 
+    '''
+    This function calls the weather API to collect all the weather data that the ML model needs and it also calculates the time data
+
+    the output of this model will be an array with the multiple features that the model needs
+
+    the output from this function will be then fed to the ml_model_features_input function that will encode the features and feed it directly to the model
+    
+    '''
+
+    # Weather Features
+    url = 'https://api.openweathermap.org/data/2.5/weather'
+    params = {'APPID': api_endpoint_weather, 'q': 'Los Angeles', 'units': 'celsius'}
+    response = requests.get(url, params=params)
+    weather = response.json()
+    
+    tempmax = weather['main']['temp_max'] # tempmax
+    tempmin = weather['main']['temp_min'] # tempmin
+    temp = weather['main']['temp'] # temp
+    feelslike = weather['main']['feels_like'] # feelslike
+    humidity = weather['main']['humidity'] # humidity
+    weather_range = tempmax - tempmin # weather_range
+    
+
+    # Time Features
+    day = datetime.datetime.now().day # day
+    weekday = datetime.datetime.today().weekday() #  weekday
+    hour = datetime.datetime.now().hour # hour
+    minute = datetime.datetime.now().minute # minute
+
+    # time_of_day_bin
+    time_of_day_bin = '' 
+    afternoon_bin_lst = [i for i in range(12,18)]
+    evening_bin_lst = [i for i in range(18,24)]
+    night_bin_lst = [i for i in range(0, 6)]
+
+    if hour in afternoon_bin_lst:
+        time_of_day_bin = 'afternoon'
+    elif hour in evening_bin_lst:
+        time_of_day_bin = 'evening'
+    elif hour in night_bin_lst:
+        time_of_day_bin = 'night'
+    else:
+        time_of_day_bin = 'morning'
+
+    # is_weekend
+    is_weekend = 0 
+    if weekday in [5,6]:
+        is_weekend = 1
+
+    # is_am
+    is_am = 0
+    if hour in [i for i in range(0,12)]:
+        is_am = 1
+
+    # is_work
+    is_work = 0
+    if hour in [i for i in range(5,20)]:
+        is_work = 1
+
+    # hour_weekday_interaction
+    hour_weekday_interaction = weekday * hour
+
+    final_dict = {'day': day, 'tempmax': tempmax, 'tempmin': tempmin, 'temp':temp, 
+                  'feelslike': feelslike, 'humidity': humidity, 'weekday': weekday, 
+                  'hour': hour, 'minute': minute, 'is_am': is_am, 'is_work': is_work,
+                   'time_of_day_bin': time_of_day_bin, 'is_weekend':is_weekend}
+
+    return final_dict
