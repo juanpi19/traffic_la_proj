@@ -383,39 +383,33 @@ with open('mapping_dictionary.pkl', 'rb') as pickle_file:
 coordinates_mapping_df = pd.read_csv('coordinates_mapping_compressed.csv')
 avg_time_in_occupancy_matrix = pd.read_csv("avg_time_in_occupancy_matrix.csv")
 
-def ml_model_features_input(SpaceID: str,
-                            OccupancyState: str,
-                            block_face: str,
-                            meter_type: str,
-                            rate_type: str,
-                            rate_range: str,
-                            metered_time_limit: str,
-                            day: int,
-                            tempmax: float,
-                            tempmin: float,
-                            temp: float,
-                            feelslikemax: float,
-                            feelslikemin: float,
-                            feelslike: float,
-                            humidity: float,
-                            is_rain: int,
-                            uvindex: int,
-                            conditions: str,
-                            description: str,
-                            weekday: int,
-                            hour: int,
-                            is_am: int,
-                            is_work: int,
-                            time_of_day_bin: str,
-                            is_weekend: int,
-                            avg_time_in_occupancy_past_3: float,
-                            avg_time_in_occupancy_past_6: float,
-                            hour_weekday_interaction: int,
-                            weather_range: float, 
-                            hour_rain_interaction: int,
-                            lat: float,
-                            long: float
-                            ):
+def transform_ml_model_features_input(SpaceID: str,
+                                    OccupancyState: str,
+                                    block_face: str,
+                                    meter_type: str,
+                                    rate_type: str,
+                                    rate_range: str,
+                                    metered_time_limit: str,
+                                    day: int,
+                                    tempmax: float,
+                                    tempmin: float,
+                                    temp: float,
+                                    feelslike: float,
+                                    humidity: float,
+                                    weekday: int,
+                                    hour: int,
+                                    minute: int,
+                                    is_am: int,
+                                    is_work: int,
+                                    time_of_day_bin: str,
+                                    is_weekend: int,
+                                    avg_time_in_occupancy_past_3: float,
+                                    avg_time_in_occupancy_past_6: float,
+                                    hour_weekday_interaction: int,
+                                    weather_range: float, 
+                                    lat: float,
+                                    long: float
+                                    ):
     
     '''
 
@@ -430,8 +424,6 @@ def ml_model_features_input(SpaceID: str,
     occupancy_state_feature = mapping_dict['OccupancyState'][OccupancyState]
     block_face_feature = mapping_dict['block_face'][block_face]
     time_of_day_bin_feature = mapping_dict['time_of_day_bin'][time_of_day_bin]
-    conditions_feature = mapping_dict['conditions'][conditions]
-    description_feature = mapping_dict['description'][description]
     meter_type_feature = mapping_dict['meter_type'][meter_type]
     rate_type_feature = mapping_dict['rate_type'][rate_type]
     rate_range_feature = mapping_dict['rate_range'][rate_range]
@@ -443,9 +435,8 @@ def ml_model_features_input(SpaceID: str,
 
 
     features_lst = np.array([spaceid_feature, occupancy_state_feature, block_face_feature, meter_type_feature, rate_type_feature, rate_range_feature, metered_time_limit_feature,
-                             day, tempmax, tempmin, temp, feelslikemax, feelslikemin, feelslike, humidity, is_rain, uvindex, conditions_feature, description_feature,
-                             weekday, hour, is_am, is_work, time_of_day_bin_feature, is_weekend, avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6,
-                             hour_weekday_interaction, weather_range, hour_rain_interaction, cluster])
+                             day, tempmax, tempmin, temp, feelslike, humidity, weekday, hour, is_am, is_work, time_of_day_bin_feature, is_weekend, avg_time_in_occupancy_past_3,
+                             avg_time_in_occupancy_past_6, hour_weekday_interaction, weather_range, cluster])
     
 
     return features_lst
@@ -469,10 +460,17 @@ def collecting_model_features(api_endpoint_weather: str) -> dict:
     response = requests.get(url, params=params)
     weather = response.json()
     
-    tempmax = weather['main']['temp_max'] # tempmax
-    tempmin = weather['main']['temp_min'] # tempmin
-    temp = weather['main']['temp'] # temp
-    feelslike = weather['main']['feels_like'] # feelslike
+    tempmax_kelvin = weather['main']['temp_max'] # tempmax
+    tempmin_kelvin = weather['main']['temp_min'] # tempmin
+    temp_kelvin = weather['main']['temp'] # temp
+
+    tempmax = round(tempmax_kelvin - 273.15, 1) # to celsius
+    tempmin = round(tempmin_kelvin - 273.15, 1) # to celsius
+    temp = round(temp_kelvin - 273.15, 1) # to celsius
+
+
+    feelslike_kelvin = weather['main']['feels_like'] # feelslike
+    feelslike = round(feelslike_kelvin - 273.15, 1) # to celsius
     humidity = weather['main']['humidity'] # humidity
     weather_range = tempmax - tempmin # weather_range
     
@@ -519,7 +517,9 @@ def collecting_model_features(api_endpoint_weather: str) -> dict:
     final_dict = {'day': day, 'tempmax': tempmax, 'tempmin': tempmin, 'temp':temp, 
                   'feelslike': feelslike, 'humidity': humidity, 'weekday': weekday, 
                   'hour': hour, 'minute': minute, 'is_am': is_am, 'is_work': is_work,
-                   'time_of_day_bin': time_of_day_bin, 'is_weekend':is_weekend}
+                   'time_of_day_bin': time_of_day_bin, 'is_weekend':is_weekend, 
+                   'hour_weekday_interaction': hour_weekday_interaction, 
+                   'weather_range': weather_range}
 
     return final_dict
 

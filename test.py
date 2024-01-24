@@ -52,8 +52,21 @@ import pytz
 # print(pt_now)
 
 
-response = api_request(api_endpoint="e7h6-4a3e", api_name= 'socrata')
-print(type(response))
+url = 'https://api.openweathermap.org/data/2.5/weather'
+
+params = {'APPID': "37012b8dfefdabc9cd6f71e8d652545d", 'q': 'Los Angeles', 'units': 'farenheit'}
+response = requests.get(url, params=params)
+weather = response.json()
+
+print(weather)
+
+tempmax = weather['main']['temp_max'] # tempmax
+tempmin = weather['main']['temp_min'] # tempmin
+temp = weather['main']['temp'] # temp
+
+temp_celsius = round(temp - 273.15, 1)
+print(temp_celsius)
+
 
 
 def calculate_avg_time_occupancy_previous_parkers(space_id: str):
@@ -76,14 +89,14 @@ def calculate_avg_time_occupancy_previous_parkers(space_id: str):
     # df['avg_time_in_occupancy_past_3'] = df.groupby('SpaceID')['avg_time_in_occupancy_past_3'].bfill()
 
 
-    avg_time_window_3 = parking_meter_inventory_api_df[parking_meter_inventory_api_df['spaceid'] == space_id]#.rolling(window=3).mean()
+#     avg_time_window_3 = parking_meter_inventory_api_df[parking_meter_inventory_api_df['spaceid'] == space_id]#.rolling(window=3).mean()
 
-    return parking_meter_inventory_api_df['spaceid'].duplicated().sum()
-
-
+#     return parking_meter_inventory_api_df['spaceid'].duplicated().sum()
 
 
-print(collecting_model_features(api_endpoint_weather='37012b8dfefdabc9cd6f71e8d652545d'))
+
+
+# print(collecting_model_features(api_endpoint_weather='37012b8dfefdabc9cd6f71e8d652545d'))
 
 
 
