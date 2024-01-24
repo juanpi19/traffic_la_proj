@@ -371,9 +371,9 @@ def joins_street_parking_inventory_with_live_api_data() -> pd.DataFrame:
     return final_df
 
 
-######################## 
+#############################
 ######### MODEL FEATURES
-#########################
+##################################
 
 # Read data from the pickle file
 with open('mapping_dictionary.pkl', 'rb') as pickle_file:
@@ -381,13 +381,7 @@ with open('mapping_dictionary.pkl', 'rb') as pickle_file:
 
 
 coordinates_mapping_df = pd.read_csv('coordinates_mapping_compressed.csv')
-
-# print(coordinates_mapping_df[(coordinates_mapping_df['lat'] == 34.041346) & (coordinates_mapping_df['long'] == -118.260304)]['cluster_coordinates'].unique()[0])
-# print()
-
-
-# print(mapping_dict.keys())
-# print(mapping_dict['time_of_day_bin'])
+avg_time_in_occupancy_matrix = pd.read_csv("avg_time_in_occupancy_matrix.csv")
 
 def ml_model_features_input(SpaceID: str,
                             OccupancyState: str,
@@ -484,10 +478,10 @@ def collecting_model_features(api_endpoint_weather: str) -> dict:
     
 
     # Time Features
-    day = datetime.datetime.now().day # day
-    weekday = datetime.datetime.today().weekday() #  weekday
-    hour = datetime.datetime.now().hour # hour
-    minute = datetime.datetime.now().minute # minute
+    day = datetime.now().day # day
+    weekday = datetime.today().weekday() #  weekday
+    hour = datetime.now().hour # hour
+    minute = datetime.now().minute # minute
 
     # time_of_day_bin
     time_of_day_bin = '' 
@@ -528,3 +522,39 @@ def collecting_model_features(api_endpoint_weather: str) -> dict:
                    'time_of_day_bin': time_of_day_bin, 'is_weekend':is_weekend}
 
     return final_dict
+
+
+
+def calculate_avg_time_occupancy_previous_parkers(space_id: str):
+
+    '''
+    Takes a list of Space ID and calculates the avg time that the previous 3 and 6 people were parked
+    
+    '''
+    
+    # avg_time_in_occupancy_past_3 and avg_time_in_occupancy_past_6
+    #parking_meter_inventory_api_df = api_request(api_endpoint="e7h6-4a3e", api_name= 'socrata')
+
+
+    # checking for empty str
+    if not space_id:
+        return -1
+    
+    
+    # calculating avg time
+    day = datetime.now().day 
+
+    # Mapping the value to its encoded value
+    space_id_encoded = mapping_dict['SpaceID'][space_id]
+
+    avg_time_in_occupancy_past_3 = avg_time_in_occupancy_matrix[(avg_time_in_occupancy_matrix['SpaceID'] == space_id_encoded) & (avg_time_in_occupancy_matrix['day'] == day)]['avg_time_in_occupancy_past_3'].values[0]
+    avg_time_in_occupancy_past_6 = avg_time_in_occupancy_matrix[(avg_time_in_occupancy_matrix['SpaceID'] == space_id_encoded) & (avg_time_in_occupancy_matrix['day'] == day)]['avg_time_in_occupancy_past_6'].values[0]
+
+
+    return avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6
+
+
+# print(calculate_avg_time_occupancy_previous_parkers("CB3253"))
+
+
+
