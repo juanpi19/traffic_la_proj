@@ -434,9 +434,9 @@ def transform_ml_model_features_input(SpaceID: str,
     cluster = coordinates_mapping_df[(coordinates_mapping_df['lat'] == lat) & (coordinates_mapping_df['long'] == long)]['cluster_coordinates'].unique()[0]
 
 
-    features_lst = np.array([spaceid_feature, occupancy_state_feature, block_face_feature, meter_type_feature, rate_type_feature, rate_range_feature, metered_time_limit_feature,
-                             day, tempmax, tempmin, temp, feelslike, humidity, weekday, hour, is_am, is_work, time_of_day_bin_feature, is_weekend, avg_time_in_occupancy_past_3,
-                             avg_time_in_occupancy_past_6, hour_weekday_interaction, weather_range, cluster])
+    features_lst = np.array([[spaceid_feature, occupancy_state_feature, block_face_feature, meter_type_feature, rate_type_feature, rate_range_feature, metered_time_limit_feature,
+                             day, tempmax, tempmin, temp, feelslike, humidity, weekday, hour, minute, is_am, is_work, time_of_day_bin_feature, is_weekend, avg_time_in_occupancy_past_3,
+                             avg_time_in_occupancy_past_6, hour_weekday_interaction, weather_range, cluster]])
     
 
     return features_lst
