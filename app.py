@@ -29,13 +29,25 @@ st.set_page_config(layout="wide")
 st.title("Your Solution to Street Parking in the City of LA")
 st.divider()
 
-st.write('**Purpose of This Project?** ', font=30)
-ul_list_markdown = '''- Leverage live data and Machine Learning techniques to minimize the time searching for street parking in downtown LA :sunglasses:\n- It's simple, input your destination, where you're coming from, the distance you're willing to walk from your destination and that's it!'''
-st.markdown(ul_list_markdown)
 
-st.write('**Sample Inputs for you to Try?** ', font=30)
-ul_list_markdown = "- **From:** USC Marshall School of Business \n- **To:** Grand Central Market\n- **Distance in Meters:** 300\n- Hit enter and let the algorithm do its thing and then... Magic time! Get a list of available street parking within proximity with a predicted time these will remain vacant! :sunglasses:"
-st.markdown(ul_list_markdown)
+with st.expander("Purpose of This App"):
+        ul_list_markdown = '''- Minimize the time spent searching for street parking in downtown LA :sunglasses:
+                              \n- It's simple. Enter your destination, where you're coming from, the distance you're willing to walk from your destination and that's it!
+                              \n- Leverage the power of live data and machine learning techniques to make the Angelenos' lives easier '''
+        st.markdown(ul_list_markdown)
+    
+
+with st.expander("Looking for an Example to See How the App Works?"):
+    ul_list_markdown = '''- **From:** USC Marshall School of Business 
+                        \n- **To:** Grand Central Market
+                        \n- **Blocks Away:** 3
+                        \n- Hit enter and let the algorithm do its thing and then... Magic time! Get a list of available street parking within proximity with a predicted time these will remain vacant! :sunglasses:'''
+    st.markdown(ul_list_markdown)
+
+
+# st.write('**Sample Inputs for you to Try?** ', font=30)
+# ul_list_markdown = "- **From:** USC Marshall School of Business \n- **To:** Grand Central Market\n- **Distance in Meters:** 300\n- Hit enter and let the algorithm do its thing and then... Magic time! Get a list of available street parking within proximity with a predicted time these will remain vacant! :sunglasses:"
+# st.markdown(ul_list_markdown)
 
 st.divider()
 
@@ -49,7 +61,7 @@ if 'current_location' not in st.session_state:
         st.session_state.current_location = ""
 
 
-from_address_user_input = col1.text_input("**From** - (if you type and hit enter you'll see the suggestions below) ", value=st.session_state.current_location)
+from_address_user_input = col1.text_input("**From** - (e.g. USC Marshall School of Business) ", value=st.session_state.current_location)
 
 
 if from_address_user_input:
@@ -62,14 +74,14 @@ if st.button('Current Location'):
 
 
 
-to_address_user_input = col2.text_input("**To** - (if you type and hit enter you'll see the suggestions below)", value="Grand Central Market")
+to_address_user_input = col2.text_input("**To** - (e.g. Grand Central Market)", value="")
 
 if to_address_user_input:
     suggestions = fetch_autocomplete_suggestions(to_address_user_input)
     to_address = col2.selectbox("Destination", options=suggestions)
 
 
-radius = col3.text_input("Enter Distance in Meters You're Willing to Walk (100 meters = 1 block)", value="")
+radius = col3.text_input("Number of Blocks Away ou're Willing to Park - (e.g. 2)", value="")
 
 
 st.write("")
@@ -133,7 +145,7 @@ if st.session_state.current_location != '':
 
                 for index, row in final_df.iterrows():
 
-                    if int(radius) >= haversine(destination_lat, destination_lon, float(row['lat']), float(row['long'])):
+                    if int(radius) * 100 >= haversine(destination_lat, destination_lon, float(row['lat']), float(row['long'])):
 
                         street_parking_spaceid_in_proximity_list.append(row['spaceid'])
 
@@ -152,7 +164,6 @@ if st.session_state.current_location != '':
 
                     available_parking_df.loc[(available_parking_df['type'] == 'destination'), 'color' ] = "#ff0000"
                     available_parking_df.loc[(available_parking_df['type'] == 'parking'), 'color' ] = "#0000FF"
-
 
 
                     map_available_parking.map(data=available_parking_df, latitude='lat', longitude='lon', size='type', color="color")
@@ -254,7 +265,7 @@ else:
 
                 for index, row in final_df.iterrows():
 
-                    if int(radius) >= haversine(destination_lat, destination_lon, float(row['lat']), float(row['long'])):
+                    if int(radius) * 100 >= haversine(destination_lat, destination_lon, float(row['lat']), float(row['long'])):
 
                         street_parking_spaceid_in_proximity_list.append(row['spaceid'])
 
@@ -273,7 +284,6 @@ else:
 
                     available_parking_df.loc[(available_parking_df['type'] == 'destination'), 'color' ] = "#ff0000"
                     available_parking_df.loc[(available_parking_df['type'] == 'parking'), 'color' ] = "#0000FF"
-
 
 
                     map_available_parking.map(data=available_parking_df, latitude='lat', longitude='lon', size='type', color="color")
