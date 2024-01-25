@@ -4,6 +4,9 @@ import requests
 import numpy as np
 import pytz
 
+import sqlite3
+import pandas as pd
+
 # url = 'https://api.openweathermap.org/data/2.5/weather'
 # params = {'APPID': "37012b8dfefdabc9cd6f71e8d652545d", 'q': 'Los Angeles', 'units': 'celsius'}
 # response = requests.get(url, params=params)
@@ -52,20 +55,20 @@ import pytz
 # print(pt_now)
 
 
-url = 'https://api.openweathermap.org/data/2.5/weather'
+# url = 'https://api.openweathermap.org/data/2.5/weather'
 
-params = {'APPID': "37012b8dfefdabc9cd6f71e8d652545d", 'q': 'Los Angeles', 'units': 'farenheit'}
-response = requests.get(url, params=params)
-weather = response.json()
+# params = {'APPID': "37012b8dfefdabc9cd6f71e8d652545d", 'q': 'Los Angeles', 'units': 'farenheit'}
+# response = requests.get(url, params=params)
+# weather = response.json()
 
-print(weather)
+# print(weather)
 
-tempmax = weather['main']['temp_max'] # tempmax
-tempmin = weather['main']['temp_min'] # tempmin
-temp = weather['main']['temp'] # temp
+# tempmax = weather['main']['temp_max'] # tempmax
+# tempmin = weather['main']['temp_min'] # tempmin
+# temp = weather['main']['temp'] # temp
 
-temp_celsius = round(temp - 273.15, 1)
-print(temp_celsius)
+# temp_celsius = round(temp - 273.15, 1)
+# print(temp_celsius)
 
 
 
@@ -97,6 +100,17 @@ def calculate_avg_time_occupancy_previous_parkers(space_id: str):
 
 
 # print(collecting_model_features(api_endpoint_weather='37012b8dfefdabc9cd6f71e8d652545d'))
+    
+
+conn = sqlite3.connect('/Users/juanherrera/Desktop/traffic.db')
+cursor = conn.cursor()
+q = '''SELECT *
+        FROM metered_parking_inventory  mi
+        '''
+
+inventory_df = pd.read_sql_query(q, conn)
+
+inventory_df.to_csv("inventory_df.csv", index=False)
 
 
 

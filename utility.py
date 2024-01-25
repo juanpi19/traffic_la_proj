@@ -19,6 +19,7 @@ weather_key_api_endpoint = st.secrets['weather_key_api_endpoint']
 bing_map_api_endpoint = st.secrets['bing_map_api_endpoint']
 parking_meter_occupancy_api_endpoint = st.secrets['parking_meter_occupancy_api_endpoint']
 
+inventory_df = pd.read_csv("inventory_df.csv")
 
 
 
@@ -72,90 +73,90 @@ def api_request(api_endpoint: str, api_name: str) -> pd.DataFrame:
 
 
 
-def ingests_parking_meter_live_data_to_parking_meter_occupancy_live_t(df: pd.DataFrame) -> None:
-    '''
-    This functions takes a dataframe collected from the parking meter live API endpoint data and stores
-    it in the parking_meter_occupancy_live table in the database
+# def ingests_parking_meter_live_data_to_parking_meter_occupancy_live_t(df: pd.DataFrame) -> None:
+#     '''
+#     This functions takes a dataframe collected from the parking meter live API endpoint data and stores
+#     it in the parking_meter_occupancy_live table in the database
 
-    returns: None
+#     returns: None
     
-    '''
-    try:
-        conn = sqlite3.connect('/Users/juanherrera/Desktop/traffic.db')
-        cursor = conn.cursor()
-        for _, row in df.iterrows():
-            eventtime_string = row['eventtime'].strftime('%Y-%m-%d %H:%M:%S')
-            space_id = row['spaceid']
+#     '''
+#     try:
+#         conn = sqlite3.connect('/Users/juanherrera/Desktop/traffic.db')
+#         cursor = conn.cursor()
+#         for _, row in df.iterrows():
+#             eventtime_string = row['eventtime'].strftime('%Y-%m-%d %H:%M:%S')
+#             space_id = row['spaceid']
 
-            # Check if the record already exists
-            select_query = "SELECT COUNT(*) FROM parking_meter_occupancy_live WHERE space_id = ? AND eventtime_utc = ?"
-            cursor.execute(select_query, (space_id, eventtime_string))
-            count = cursor.fetchone()[0]
+#             # Check if the record already exists
+#             select_query = "SELECT COUNT(*) FROM parking_meter_occupancy_live WHERE space_id = ? AND eventtime_utc = ?"
+#             cursor.execute(select_query, (space_id, eventtime_string))
+#             count = cursor.fetchone()[0]
 
-            if count == 0:
-                # The record doesn't exist, so insert it
-                insert_query = "INSERT INTO parking_meter_occupancy_live (space_id, eventtime_utc, occupancy_state) VALUES (?, ?, ?);"
-                cursor.execute(insert_query, (space_id, eventtime_string, row['occupancystate']))
+#             if count == 0:
+#                 # The record doesn't exist, so insert it
+#                 insert_query = "INSERT INTO parking_meter_occupancy_live (space_id, eventtime_utc, occupancy_state) VALUES (?, ?, ?);"
+#                 cursor.execute(insert_query, (space_id, eventtime_string, row['occupancystate']))
 
-            else:
-                pass
+#             else:
+#                 pass
 
-        conn.commit()
+#         conn.commit()
 
-        #     insert_query = "INSERT INTO parking_meter_occupancy_live (space_id, eventtime_utc, occupancy_state) VALUES (?, ?, ?);"
-        #     cursor.execute(insert_query, (row['spaceid'], eventtime_string, row['occupancystate']))
-        # conn.commit()
+#         #     insert_query = "INSERT INTO parking_meter_occupancy_live (space_id, eventtime_utc, occupancy_state) VALUES (?, ?, ?);"
+#         #     cursor.execute(insert_query, (row['spaceid'], eventtime_string, row['occupancystate']))
+#         # conn.commit()
     
-    except:
-        raise Exception("Data didn't make it to database")
-    print('Success')
+#     except:
+#         raise Exception("Data didn't make it to database")
+#     print('Success')
 
-    
-
-def ingests_parking_meter_inventory_to_metered_parking_inventory_t(df: pd.DataFrame) -> None:
-    '''
-    This functions takes a dataframe collected from the parking meter inventory API endpoint data and stores
-    it in the metered_parking_inventory table in the database
-
-    returns: None
-    
-    '''
-    try:
-        conn = sqlite3.connect('/Users/juanherrera/Desktop/traffic.db')
-        cursor = conn.cursor()
-        for _, row in df.iterrows():
-            insert_query = '''INSERT INTO metered_parking_inventory
-                                        (space_id, block_face, meter_type, rate_type, rate_range, metered_time_limit, lat, long) 
-                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?);'''
-            cursor.execute(insert_query, (row['spaceid'], row['blockface'], row['metertype'], 
-                                          row['ratetype'], row['raterange'], row['timelimit'],
-                                          preprocessing.dict_to_columns_lat_long(row['latlng'])[0],
-                                          preprocessing.dict_to_columns_lat_long(row['latlng'])[1]
-                                          ))
-        conn.commit()
-    
-    except:
-        raise Exception("Data didn't make it to database")
-    print('Success')
     
 
-def ingests_weather_data_to_weather_t(df: pd.DataFrame) -> None:
-    '''
-    This function takes a dataframe containing the weather data and stores it in the database
+# def ingests_parking_meter_inventory_to_metered_parking_inventory_t(df: pd.DataFrame) -> None:
+#     '''
+#     This functions takes a dataframe collected from the parking meter inventory API endpoint data and stores
+#     it in the metered_parking_inventory table in the database
 
-    returns: None
+#     returns: None
     
-    '''
-    try:
-        conn = sqlite3.connect('/Users/juanherrera/Desktop/traffic.db')
-        cursor = conn.cursor()
-        insert_query = "INSERT INTO weather (eventtime_utc, temperature, condition) VALUES (?, ?, ?);"
-        cursor.execute(insert_query, (datetime.now(pytz.utc).isoformat(), df['temp'].values[0], df['condition'].values[0]))
-        conn.commit()
+#     '''
+#     try:
+#         conn = sqlite3.connect('/Users/juanherrera/Desktop/traffic.db')
+#         cursor = conn.cursor()
+#         for _, row in df.iterrows():
+#             insert_query = '''INSERT INTO metered_parking_inventory
+#                                         (space_id, block_face, meter_type, rate_type, rate_range, metered_time_limit, lat, long) 
+#                                         VALUES (?, ?, ?, ?, ?, ?, ?, ?);'''
+#             cursor.execute(insert_query, (row['spaceid'], row['blockface'], row['metertype'], 
+#                                           row['ratetype'], row['raterange'], row['timelimit'],
+#                                           preprocessing.dict_to_columns_lat_long(row['latlng'])[0],
+#                                           preprocessing.dict_to_columns_lat_long(row['latlng'])[1]
+#                                           ))
+#         conn.commit()
     
-    except:
-        raise Exception("Data didn't make it to database")
-    print('Success')
+#     except:
+#         raise Exception("Data didn't make it to database")
+#     print('Success')
+    
+
+# def ingests_weather_data_to_weather_t(df: pd.DataFrame) -> None:
+#     '''
+#     This function takes a dataframe containing the weather data and stores it in the database
+
+#     returns: None
+    
+#     '''
+#     try:
+#         conn = sqlite3.connect('/Users/juanherrera/Desktop/traffic.db')
+#         cursor = conn.cursor()
+#         insert_query = "INSERT INTO weather (eventtime_utc, temperature, condition) VALUES (?, ?, ?);"
+#         cursor.execute(insert_query, (datetime.now(pytz.utc).isoformat(), df['temp'].values[0], df['condition'].values[0]))
+#         conn.commit()
+    
+#     except:
+#         raise Exception("Data didn't make it to database")
+#     print('Success')
 
 ####################
 # Bing Map Functions
@@ -352,18 +353,20 @@ def joins_street_parking_inventory_with_live_api_data() -> pd.DataFrame:
     returns: df
     
     '''
-    conn = sqlite3.connect('/Users/juanherrera/Desktop/traffic.db')
-    cursor = conn.cursor()
-    q = '''SELECT *
-            FROM metered_parking_inventory  mi
-            '''
+    # conn = sqlite3.connect('/Users/juanherrera/Desktop/traffic.db')
+    # cursor = conn.cursor()
+    # q = '''SELECT *
+    #         FROM metered_parking_inventory  mi
+    #         '''
+
 
     api_df = api_request(api_endpoint=parking_meter_occupancy_api_endpoint, api_name='Socrata')
     api_weather_df = api_request(api_endpoint=weather_key_api_endpoint, api_name='weather')
-    ingests_parking_meter_live_data_to_parking_meter_occupancy_live_t(api_df) 
-    ingests_weather_data_to_weather_t(api_weather_df)
+    
+    # ingests_parking_meter_live_data_to_parking_meter_occupancy_live_t(api_df) 
+    # ingests_weather_data_to_weather_t(api_weather_df)
 
-    inventory_df = pd.read_sql_query(q, conn)
+    # inventory_df = pd.read_sql_query(q, conn)
     final_df = pd.merge(api_df, inventory_df, how='inner', left_on='spaceid', right_on='space_id')
 
     final_df['lat'] = [float(i) for i in final_df['lat']]

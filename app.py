@@ -8,8 +8,7 @@ import sqlite3
 from datetime import datetime, timedelta
 import pytz  # for working with time zones
 from utility import get_coordinates, calculates_distance_and_driving_time_from_point_a_to_point_b, api_request, \
-                    ingests_parking_meter_live_data_to_parking_meter_occupancy_live_t, haversine, \
-                    fetch_autocomplete_suggestions, joins_street_parking_inventory_with_live_api_data, \
+                     haversine, fetch_autocomplete_suggestions, joins_street_parking_inventory_with_live_api_data, \
                     collecting_model_features, calculate_avg_time_occupancy_previous_parkers, \
                     transform_ml_model_features_input
 
@@ -28,6 +27,19 @@ with open('xgb_model_v1.pkl', 'rb') as pickle_file:
 st.set_page_config(layout="wide")
 
 st.title("Your Solution to Street Parking in the City of LA")
+st.divider()
+
+st.write('**Purpose of This Project?** ', font=30)
+ul_list_markdown = '''- Leverage live data and Machine Learning techniques to minimize the time searching for street parking in downtown LA :sunglasses:\n- It's simple, input your destination, where you're coming from, the distance you're willing to walk from your destination and that's it!'''
+st.markdown(ul_list_markdown)
+
+st.write('**Sample Inputs for you to Try?** ', font=30)
+ul_list_markdown = "- **From:** USC Marshall School of Business \n- **To:** Grand Central Market\n- **Distance in Meters:** 300\n- Hit enter and let the algorithm do its thing and then... Magic time! Get a list of available street parking within proximity with a predicted time these will remain vacant! :sunglasses:"
+st.markdown(ul_list_markdown)
+
+st.divider()
+
+#####
 
 col1, col2, col3 = st.columns(3, gap='large')
 
@@ -37,7 +49,7 @@ if 'current_location' not in st.session_state:
         st.session_state.current_location = ""
 
 
-from_address_user_input = col1.text_input("From - (if you type and hit enter you'll see the suggestions below) ", value=st.session_state.current_location)
+from_address_user_input = col1.text_input("**From** - (if you type and hit enter you'll see the suggestions below) ", value=st.session_state.current_location)
 
 
 if from_address_user_input:
@@ -50,14 +62,14 @@ if st.button('Current Location'):
 
 
 
-to_address_user_input = col2.text_input("To - (if you type and hit enter you'll see the suggestions below)", value="317 S Broadway, Los Angeles, CA 90013")
+to_address_user_input = col2.text_input("**To** - (if you type and hit enter you'll see the suggestions below)", value="Grand Central Market")
 
 if to_address_user_input:
     suggestions = fetch_autocomplete_suggestions(to_address_user_input)
     to_address = col2.selectbox("Destination", options=suggestions)
 
 
-radius = col3.text_input("Enter Distance in meters you're willing to walk (100 meters = 1 block)", value="")
+radius = col3.text_input("Enter Distance in Meters You're Willing to Walk (100 meters = 1 block)", value="")
 
 
 st.write("")
@@ -195,8 +207,9 @@ if st.session_state.current_location != '':
                         predicted_time_available.append(pred)
 
                     
+                    st.divider()
                     map_available_parking.subheader(f"Available Parking & Predicted Remaining Vacant Time!")
-                    map_available_parking.subheader(f"Park as soon as you arrive 😮‍💨")
+                    map_available_parking.subheader(f"Park As Soon As You Arrive 😮‍💨")
                     
 
                     features_model_df['Remaining Time Vacant in Minutes'] = predicted_time_available
@@ -314,7 +327,7 @@ else:
                         pred = round(np.exp(xgb_model.predict(model_inputs_array))[0],1)
                         predicted_time_available.append(pred)
 
-                    
+                    st.divider()
                     map_available_parking.subheader(f"Available Parking & Predicted Remaining Vacant Time!")
                     map_available_parking.subheader(f"Park as soon as you arrive 😮‍💨")
                     
