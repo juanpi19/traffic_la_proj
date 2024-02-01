@@ -9,6 +9,7 @@ import streamlit as st
 from datetime import datetime
 import pytz  # for working with time zones
 from math import radians, sin, cos, sqrt, atan2
+import webbrowser
 
 
 
@@ -558,6 +559,10 @@ def calculate_avg_time_occupancy_previous_parkers(space_id: str):
 
 
 # print(calculate_avg_time_occupancy_previous_parkers("CB3253"))
+
+def open_google_maps(from_place, to_place):
+    google_maps_url = f"https://www.google.com/maps/dir/{from_place}/{to_place}"
+    webbrowser.open_new_tab(google_maps_url)
 
 
 
