@@ -76,6 +76,21 @@ if 'current_location' not in st.session_state:
 if 'button_clicked' not in st.session_state:
     st.session_state.button_clicked = False
 
+
+# from_address_user_input and to_address_user_input and radius
+    
+if 'from_address_user_input' not in st.session_state:
+    st.session_state.from_address_user_input = ""
+
+if 'to_address_user_input' not in st.session_state:
+    st.session_state.to_address_user_input = ""
+
+if 'radius' not in st.session_state:
+    st.session_state.radius = ""
+
+
+
+
 # from
 
 
@@ -83,6 +98,7 @@ from_address_user_input = col1.text_input("**From** - (e.g. USC Marshall School 
 
 
 if from_address_user_input:
+    st.session_state.from_address_user_input = from_address_user_input
     suggestions = fetch_autocomplete_suggestions(from_address_user_input)
     from_address = col1.selectbox("Suggested Places - (From)", options=suggestions)
 
@@ -95,11 +111,16 @@ if col1.button('Current Location'):
 to_address_user_input = col2.text_input("**To** - (e.g. Grand Central Market)", value="")
 
 if to_address_user_input:
+    st.session_state.to_address_user_input = to_address_user_input
     suggestions = fetch_autocomplete_suggestions(to_address_user_input)
     to_address = col2.selectbox("Destination", options=suggestions)
 
 
 radius = col3.text_input("Number of Blocks Away You're Willing to Park - (e.g. 2)", value="")
+if radius:
+    st.session_state.radius = radius
+
+
 button_clicked = col3.button("Go 🔜")
 
 
@@ -136,6 +157,7 @@ if button_clicked:
 
         # emptying the placeholder
         placeholder.empty()
+        st.session_state.initial_map = False
 
         if to_address_user_input and radius:
             
@@ -275,15 +297,18 @@ if button_clicked:
     #########################              
     else:
 
-        if from_address_user_input and to_address_user_input and radius:
+        if st.session_state.from_address_user_input and st.session_state.to_address_user_input and st.session_state.radius:
 
             with st.spinner("Searching for available street parking..."):
 
                 # emptying the placeholder
                 placeholder.empty()
+                st.session_state.initial_map = False
 
-                from_address_coordinates = get_coordinates(from_address) 
-                to_address_coordinates = get_coordinates(to_address)
+                #from_address_coordinates = get_coordinates(from_address) 
+                from_address_coordinates = get_coordinates(st.session_state.from_address_user_input) 
+                #to_address_coordinates = get_coordinates(to_address)
+                to_address_coordinates = get_coordinates(st.session_state.to_address_user_input)
 
                 if from_address_coordinates and to_address_coordinates:
                     
@@ -422,11 +447,6 @@ if button_clicked:
 
                     with left:
 
-                        # Initialize session state
-                        if 'option' not in st.session_state:
-                            st.session_state.option = None
-
-
                         # if user still wants to go, they can select an option here
                         option = st.selectbox(
                                     'Still go? Select your option below!?',
@@ -435,10 +455,7 @@ if button_clicked:
                                     help="Select the spot that you'd like and a google maps window will open and it'll take you right there!",
                                     placeholder="Select Parking Spot...")
                         
-                        # Store selected option in session state
-                        st.session_state.option = option
-                        
-                        st.write(st.session_state.option)
+                        st.write(option)
                         
                         # if option != None:
                         #     final_destination = spot_dict[option]
