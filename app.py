@@ -6,6 +6,7 @@ import pickle as pk
 # import xgboost
 import sqlite3
 from datetime import datetime, timedelta
+import webbrowser
 import time
 from utility import get_coordinates, \
                     calculates_distance_and_driving_time_from_point_a_to_point_b, \
@@ -16,7 +17,8 @@ from utility import get_coordinates, \
                     collecting_model_features, \
                     calculate_avg_time_occupancy_previous_parkers, \
                     transform_ml_model_features_input, \
-                    open_google_maps
+                    open_google_maps, \
+                    get_user_loc
 
 # Getting API keys 
 app_token = st.secrets['app_token']
@@ -27,36 +29,34 @@ bing_map_api_endpoint = st.secrets['bing_map_api_endpoint']
 parking_meter_occupancy_api_endpoint = st.secrets['parking_meter_occupancy_api_endpoint']
 
 
+# if st.checkbox("Check my location"):
+#     loc = get_user_loc()
+#     st.write(f"Your coordinates are {loc}")
+
+
+# lat = loc['coords']['latitude']
+# lat = loc['coords']['longitude']
+
+
 ### Functions
 
-# @st.cache_data
-# def display_initial_map(final_df: pd.DataFrame):
-#     # Displaying Map
-#     # if 'initial_map' not in st.session_state:
-#     #     st.session_state.initial_map = True
-
-#     if st.session_state.initial_map:
-#         with placeholder.container():
-#             st.subheader(f"We're Covering {final_df.shape[0]} Street Parking Spots in Los Angeles")
-#             st.write("The majority of the spots are downtown, so if you're headed there this is definitely going to help you!")
-#             return st.map(final_df[['lat', 'lon']])
-
-
+# get ip location
 @st.cache_data
 def keeping_state(from_, to):
     return from_, to
 
-
-# Reading ML model
+# Loading ML model from pickle file
 with open('xgb_model_v1.pkl', 'rb') as pickle_file:
     xgb_model = pk.load(pickle_file)
 
-##########
+
+################
 # Top Part
-##########
 
 # Setting the app to be wide
 st.set_page_config(layout="wide")
+loc = get_user_loc()
+time.sleep(1)
 
 # Main title
 st.title("Your Solution to Street Parking in the City of LA")
@@ -78,12 +78,12 @@ with st.expander("Wondering How It Works?"):
     st.markdown(ul_list_markdown)
 
 
+# Adding space for better UI
 st.divider()
 
 
-#####################
+##################
 # Initial Map
-#####################
 
 col1, col2, col3 = st.columns(3, gap='large')
 
@@ -91,31 +91,33 @@ col1, col2, col3 = st.columns(3, gap='large')
 
 # current location button
 if 'current_location' not in st.session_state:
-        st.session_state.current_location = ""
+        lat = loc['coords']['latitude']
+        lon = loc['coords']['longitude']
+        from_address = f" {lat},{lon} ".strip()
+        st.session_state.current_location = from_address
 
 # go button clicked
 if 'button_clicked' not in st.session_state:
     st.session_state.button_clicked = False
 
-
-# from_address_user_input and to_address_user_input and radius
-    
+# from_address_user_input
 if 'from_address_user_input' not in st.session_state:
     st.session_state.from_address_user_input = ""
 
+# to_address_user_input and radius
 if 'to_address_user_input' not in st.session_state:
     st.session_state.to_address_user_input = ""
 
+# radius
 if 'radius' not in st.session_state:
     st.session_state.radius = ""
 
+# initial_map
 if 'initial_map' not in st.session_state:
     st.session_state.initial_map = True
 
 
 ################
-
-# from
 
 
 from_address_user_input = col1.text_input("**From** - (e.g. USC Marshall School of Business) ", value=st.session_state.current_location)
@@ -126,9 +128,12 @@ if from_address_user_input:
     suggestions = fetch_autocomplete_suggestions(from_address_user_input)
     from_address = col1.selectbox("Suggested Places - (From)", options=suggestions)
 
-if col1.button('Current Location'):
-    from_address = f" {geocoder.ip('me').latlng[0]},{geocoder.ip('me').latlng[1] } ".strip()
+
+if col1.checkbox("Current Location"):
     st.session_state.current_location = from_address
+else:
+    st.session_state.current_location = ''
+
 
 
 
@@ -170,8 +175,7 @@ if st.session_state.initial_map:
 
 #####################
 # Main Logic
-# - if-else 
-#####################
+        
 if button_clicked or st.session_state.button_clicked:
 
     st.session_state.button_clicked = True
@@ -235,20 +239,15 @@ if button_clicked or st.session_state.button_clicked:
                 st.subheader(f"{len(street_parking_spaceid_in_proximity_list)} Available Street Parking Spots Near your Destination!")
                 st.text(f"🏁 distance in kilometers: {round(distance,1)}")
                 st.text(f"🚗 time in minutes: {round(duration)}, get there by {(datetime.now() + timedelta(minutes=duration)).time().strftime('%H:%M')}")
-                st.text(f"⬇️ scroll down to find the optimal route to your destination!")
+                st.text(f"⬇️ scroll down to find the optimal available street parking near your destination!")
 
                 available_parking_df.loc[(available_parking_df['type'] == 'destination'), 'color' ] = "#ff0000"
                 available_parking_df.loc[(available_parking_df['type'] == 'parking'), 'color' ] = "#0000FF"
 
 
                 st.map(data=available_parking_df, latitude='lat', longitude='lon', size='type', color="color")
-                st.caption("🔵 Available Street Parking Around your Destination")
-                st.caption("🔴 Origin and Destination")
-                # st.write(f"🏁 distance in kilometers: {distance}")
-                # st.write(f"🚗 time in minutes: {round(duration)}, get there by {(datetime.now() + timedelta(minutes=duration)).time().strftime('%H:%M')}")
-                #map_available_parking.write(available_parking_df)
+                st.caption("🔴 Origin and Destination 🔵 Available Street Parking Around your Destination")
 
-                #map_available_parking.write(available_parking_df.columns)
                 # Prepping data for model
                 features_model_df = final_df[['spaceid', 'occupancystate', 'block_face', 'meter_type', 'rate_type', 'rate_range', 'metered_time_limit', 'lat', 'lon']]
 
@@ -307,12 +306,63 @@ if button_clicked or st.session_state.button_clicked:
                 st.subheader(f"Let's not waste time searching for parking... Park as soon as you arrive 😮‍💨")
                 
 
-                features_model_df['Remaining Available Time in Minutes'] = predicted_time_available
-                #map_available_parking.write(features_model_df[['spaceid', 'lat', 'lon', 'rate_range', 'metered_time_limit', 'Remaining Time Vacant in Minutes']].sort_values(by='Remaining Time Vacant in Minutes', ascending=False))
-                st.write(features_model_df[['Remaining Available Time in Minutes', 'rate_range', 'metered_time_limit']].sort_values(by='Remaining Available Time in Minutes', ascending=False))
+                # features_model_df['Remaining Available Time in Minutes'] = predicted_time_available
+                # #map_available_parking.write(features_model_df[['spaceid', 'lat', 'lon', 'rate_range', 'metered_time_limit', 'Remaining Time Vacant in Minutes']].sort_values(by='Remaining Time Vacant in Minutes', ascending=False))
+                # st.write(features_model_df[['Remaining Available Time in Minutes', 'rate_range', 'metered_time_limit']].sort_values(by='Remaining Available Time in Minutes', ascending=False))
 
-                if st.button("Go! 🔜"):
-                    open_google_maps(from_place=from_address_user_input, to_place=to_address_user_input)
+
+                features_model_df['Spot Remaining Available Time in Minutes'] = predicted_time_available
+                features_model_df[f'ETA to {st.session_state.to_address_user_input} in Minutes'] = round(duration)
+                features_model_df['Spot'] = [f'Spot {i+1}' for i in range(features_model_df.shape[0])]
+                
+                # this keeps the available parking spots whose predicted available time is greater than the duration of your trip to get there
+                features_model_df_2 = features_model_df[features_model_df['Spot Remaining Available Time in Minutes'] > round(duration)]
+
+                # This dict collects the origin and destination from all available spots
+                spot_dict = {}
+                for index,row in features_model_df.iterrows():
+                    spot_dict[f"{row['Spot']}"] = (from_address_user_input, f"{row['lat']},{row['lon']}")
+
+
+                if features_model_df_2.shape[0] == 0:
+                    st.caption("The model predicts that the available parking spots near your destination will be taken by the time you arrive 🤔. Try expanding the number of blocks away from your destination or run it again when you're approaching your destination!")
+                    st.write(features_model_df[['Spot', f'ETA to {st.session_state.to_address_user_input} in Minutes', 
+                                                'Spot Remaining Available Time in Minutes']].sort_values(by='Spot Remaining Available Time in Minutes', ascending=False).set_index('Spot').T)
+
+                    # Adding columns to improve UI
+                    left, right = st.columns(2)
+
+                    with left:
+                        with st.form("Spot Form"):
+                            
+                            # if user still wants to go, they can select an option here
+                            option = st.selectbox(
+                                        'Still go? Select your option below!',
+                                        (i for i in features_model_df['Spot']),
+                                        index=None,
+                                        help="Select the spot that you'd like and a google maps window will open and it'll take you right there!",
+                                        placeholder="Select Parking Spot...")
+                                
+                            submit_button = st.form_submit_button("Go! 🔜")
+
+                            if submit_button:
+                                final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
+                                open_google_maps(from_place=final_destination[0], to_place=final_destination[1])
+
+
+                else:
+                    
+                    # optimizing the best one
+                    st.write("This is the optimal spot :sunglasses:")
+                    st.write(features_model_df_2[['Spot', f'ETA to {st.session_state.to_address_user_input} in Minutes', 
+                                                  'Spot Remaining Available Time in Minutes', 
+                                                  'rate_range', 'metered_time_limit']].sort_values(by='Spot Remaining Available Time in Minutes', ascending=False).head(1).set_index('Spot').T)
+                    
+                    # on_click=open_page(url)
+                    option = features_model_df_2['Spot'].values[0]
+                    final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
+                    if st.button("Go! 🔜"):
+                        open_google_maps(from_place=final_destination[0], to_place=final_destination[1])
 
 
 
@@ -377,7 +427,7 @@ if button_clicked or st.session_state.button_clicked:
                 st.subheader(f"{len(street_parking_spaceid_in_proximity_list)} Available Street Parking Spots Near your Destination!")
                 st.text(f"🏁 distance in kilometers: {round(distance,1)}")
                 st.text(f"🚗 time in minutes: {round(duration)}, get there by {(datetime.now() + timedelta(minutes=duration)).time().strftime('%H:%M')}")
-                st.text(f"⬇️ scroll down to find the optimal route to your destination!")
+                st.text(f"⬇️ scroll down to find the optimal available street parking near your destination!")
 
                 available_parking_df.loc[(available_parking_df['type'] == 'destination'), 'color' ] = "#ff0000"
                 available_parking_df.loc[(available_parking_df['type'] == 'parking'), 'color' ] = "#0000FF"
@@ -433,20 +483,19 @@ if button_clicked or st.session_state.button_clicked:
                                                 long= features_model_df.iloc[num]['lon']
                                             )
                         
-                        
-                        pred = round(np.exp(xgb_model.predict(model_inputs_array))[0],1)
+                        # Predicting Available Remaining Time
+                        pred = np.exp(xgb_model.predict(model_inputs_array))[0]
                         predicted_time_available.append(pred)
 
                     # Wait a longer second
                     time.sleep(1)
 
                 st.divider()
-                #st.subheader(f"Available Parking & Predicted Remaining Vacant Time!")
                 st.subheader(f"Let's not Waste Time Searching for Parking... Park As Soon As You Arrive 😮‍💨")
                 
 
-                features_model_df['Spot Remaining Available Time in Minutes'] = [round(i,1) for i in predicted_time_available]
-                features_model_df['Estimated Time Arrival in Minutes'] = round(duration)
+                features_model_df['Spot Remaining Available Time in Minutes'] = predicted_time_available
+                features_model_df[f'ETA to {st.session_state.to_address_user_input} in Minutes'] = round(duration)
                 features_model_df['Spot'] = [f'Spot {i+1}' for i in range(features_model_df.shape[0])]
                 
                 # this keeps the available parking spots whose predicted available time is greater than the duration of your trip to get there
@@ -459,8 +508,9 @@ if button_clicked or st.session_state.button_clicked:
 
                 if features_model_df_2.shape[0] == 0:
                     st.caption("The model predicts that the available parking spots near your destination will be taken by the time you arrive 🤔. Try expanding the number of blocks away from your destination or run it again when you're approaching your destination!")
-                    st.write(features_model_df[['Spot', 'Estimated Time Arrival in Minutes', 'Spot Remaining Available Time in Minutes']].sort_values(by='Spot Remaining Available Time in Minutes', ascending=False).set_index('Spot').T)
-                   # st.caption("What this means? The model predicts that the available parking spots near your destination will be taken by the time you arrive...😤")
+                    st.write(features_model_df[['Spot', f'ETA to {st.session_state.to_address_user_input} in Minutes', 
+                                                'Spot Remaining Available Time in Minutes']].sort_values(by='Spot Remaining Available Time in Minutes', ascending=False).set_index('Spot').T)
+
 
                     # Adding columns to improve UI
                     left, right = st.columns(2)
@@ -476,7 +526,7 @@ if button_clicked or st.session_state.button_clicked:
                                         help="Select the spot that you'd like and a google maps window will open and it'll take you right there!",
                                         placeholder="Select Parking Spot...")
                                 
-                            submit_button = st.form_submit_button("Go 🔜")
+                            submit_button = st.form_submit_button("Go! 🔜")
 
                             if submit_button:
                                 final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
@@ -485,13 +535,18 @@ if button_clicked or st.session_state.button_clicked:
                 else:
                     # optimizing the best one
                     st.write("This is the optimal spot :sunglasses:")
-                    st.write(features_model_df_2[['Spot', 'Estimated Time Arrival in Minutes', 'Spot Remaining Available Time in Minutes', 'rate_range', 'metered_time_limit']].sort_values(by='Spot Remaining Available Time in Minutes', ascending=False).head(1).set_index('Spot').T)
+                    st.write(features_model_df_2[['Spot', f'ETA to {st.session_state.to_address_user_input} in Minutes', 
+                                                  'Spot Remaining Available Time in Minutes', 
+                                                  'rate_range', 'metered_time_limit']].sort_values(by='Spot Remaining Available Time in Minutes', ascending=False).head(1).set_index('Spot').T)
+                    
 
+                    # on_click=open_page(url)
+                    option = features_model_df_2['Spot'].values[0]
+                    final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
                     if st.button("Go! 🔜"):
-                        option = features_model_df_2['Spot'].values[0]
-                        final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
                         open_google_maps(from_place=final_destination[0], to_place=final_destination[1])
-                        #open_google_maps(from_place=from_address_user_input, to_place=to_address_user_input)
+
+                
 
 
 

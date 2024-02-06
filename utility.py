@@ -9,7 +9,8 @@ import streamlit as st
 from datetime import datetime
 import pytz  # for working with time zones
 from math import radians, sin, cos, sqrt, atan2
-import webbrowser
+# import webbrowser
+from streamlit.components.v1 import html
 
 
 
@@ -558,11 +559,39 @@ def calculate_avg_time_occupancy_previous_parkers(space_id: str):
     return avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6
 
 
-# print(calculate_avg_time_occupancy_previous_parkers("CB3253"))
+# Opens up new tab with the right address
 
 def open_google_maps(from_place, to_place):
     google_maps_url = f"https://www.google.com/maps/dir/{from_place}/{to_place}"
-    webbrowser.open_new_tab(google_maps_url)
+    # webbrowser.open_new_tab(google_maps_url)
+    open_script= """
+        <script type="text/javascript">
+            window.open('%s', '_blank').focus();
+        </script>
+    """ % (google_maps_url)
+    html(open_script)
+
+
+# import streamlit as st
+# from streamlit.components.v1 import html
+
+# def open_page(url):
+#     open_script= """
+#         <script type="text/javascript">
+#             window.open('%s', '_blank').focus();
+#         </script>
+#     """ % (url)
+#     html(open_script)
+
+# st.button('Open link', on_click=open_page, args=('https://streamlit.io',))
+    
+
+from streamlit_js_eval import  get_geolocation
+
+def get_user_loc():
+    location = get_geolocation()
+    return location
+
 
 
 
