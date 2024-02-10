@@ -9,7 +9,11 @@
 2. Create key for Bing Maps API: https://www.microsoft.com/en-us/maps/bing-maps/choose-your-bing-maps-api
 3. Create key for Openweather API: https://openweathermap.org/api
 4. Clone repo, create virtual environment and install dependencies using the command line
-    ```python pip install -r requirements.txt
+<pre>
+<code>
+// pip install -r requirements.txt
+</code>
+</pre>
 
 
 
