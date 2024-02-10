@@ -11,7 +11,7 @@
 4. Clone repo, create virtual environment and install dependencies using the command line
 <pre>
 <code>
-// pip install -r requirements.txt
+pip install -r requirements.txt
 </code>
 </pre>
 
