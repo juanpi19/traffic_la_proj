@@ -518,7 +518,7 @@ if button_clicked or st.session_state.button_clicked:
                 # This dict collects the origin and destination from all available spots
                 spot_dict = {}
                 for index,row in features_model_df.iterrows():
-                    spot_dict[f"{row['Spot']}"] = (from_address_user_input, f"{row['lat']},{row['lon']}")
+                    spot_dict[f"{row['Spot']}"] = (st.session_state.from_address_user_input, f"{row['lat']},{row['lon']}")
 
                 if features_model_df_2.shape[0] == 0:
                     st.caption("The model predicts that the available parking spots near your destination will be taken by the time you arrive 🤔. Try expanding the number of blocks away from your destination or run it again when you're approaching your destination!")
@@ -542,8 +542,14 @@ if button_clicked or st.session_state.button_clicked:
                                 
                             submit_button = st.form_submit_button("Go! 🔜")
 
+                            #option = features_model_df_2['Spot'].values
+                            #final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
+                            #st.write(spot_dict[option][0])
+
+
                             if submit_button:
                                 final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
+                                # st.write(final_destination)
                                 open_google_maps(from_place=final_destination[0], to_place=final_destination[1])
 
                 else:
@@ -557,13 +563,14 @@ if button_clicked or st.session_state.button_clicked:
                     # on_click=open_page(url)
                     option = features_model_df_2['Spot'].values[0]
                     final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
+
                     if st.button("Go! 🔜"):
                         open_google_maps(from_place=final_destination[0], to_place=final_destination[1])
 
                 
 
 # If they make a change they need to click on the "GO! 🔜" button again to rerun.
-st.session_state.button_clicked = False
+#st.session_state.button_clicked = False
 
 
 
