@@ -8,10 +8,9 @@
 1. Store the Key for Data LA City API: https://data.lacity.org/Transportation/LADOT-Parking-Meter-Occupancy/e7h6-4a3e/about_data
 2. Create key for Bing Maps API: https://www.microsoft.com/en-us/maps/bing-maps/choose-your-bing-maps-api
 3. Create key for Openweather API: https://openweathermap.org/api
-4. Clone repo, create virtual environment and install dependencies
+4. Clone repo, create virtual environment and install dependencies using the command line
     ```python
-# Your Python code snippet goes here
-def my_function():
-    print("Hello, world!")
+# pip install -r requirements.txt
+
 
 
