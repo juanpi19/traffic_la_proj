@@ -11,6 +11,7 @@ import pytz  # for working with time zones
 from math import radians, sin, cos, sqrt, atan2
 # import webbrowser
 from streamlit.components.v1 import html
+from streamlit_js_eval import  get_geolocation
 
 
 
@@ -571,23 +572,7 @@ def open_google_maps(from_place, to_place):
     """ % (google_maps_url)
     html(open_script)
 
-
-# import streamlit as st
-# from streamlit.components.v1 import html
-
-# def open_page(url):
-#     open_script= """
-#         <script type="text/javascript">
-#             window.open('%s', '_blank').focus();
-#         </script>
-#     """ % (url)
-#     html(open_script)
-
-# st.button('Open link', on_click=open_page, args=('https://streamlit.io',))
     
-
-from streamlit_js_eval import  get_geolocation
-
 def get_user_loc():
     location = get_geolocation()
     return location

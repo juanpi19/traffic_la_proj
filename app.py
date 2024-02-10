@@ -49,14 +49,16 @@ def keeping_state(from_, to):
 with open('xgb_model_v1.pkl', 'rb') as pickle_file:
     xgb_model = pk.load(pickle_file)
 
-
 ################
 # Top Part
 
 # Setting the app to be wide
 st.set_page_config(layout="wide")
 loc = get_user_loc()
-time.sleep(1)
+
+# waiting until data is stored in the variable
+while loc is None:
+    time.sleep(1)
 
 # Main title
 st.title("Your Solution to Street Parking in the City of LA")
@@ -89,13 +91,6 @@ col1, col2, col3 = st.columns(3, gap='large')
 
 ######## Session States
 
-# current location button
-if 'current_location' not in st.session_state:
-        lat = loc['coords']['latitude']
-        lon = loc['coords']['longitude']
-        from_address = f" {lat},{lon} ".strip()
-        st.session_state.current_location = from_address
-
 # go button clicked
 if 'button_clicked' not in st.session_state:
     st.session_state.button_clicked = False
@@ -116,33 +111,52 @@ if 'radius' not in st.session_state:
 if 'initial_map' not in st.session_state:
     st.session_state.initial_map = True
 
+# current location button
+if 'current_location' not in st.session_state:
+       #time.sleep(2)
+        lat = loc['coords']['latitude']
+        lon = loc['coords']['longitude']
+        from_address = f" {lat},{lon} ".strip()
+        st.session_state.current_location = from_address
+
 
 ################
 
-
-from_address_user_input = col1.text_input("**From** - (e.g. USC Marshall School of Business) ", value=st.session_state.current_location)
-
+from_address_user_input = col1.text_input("**From** - (e.g. USC Marshall School of Business) ", value='')
 
 if from_address_user_input:
     st.session_state.from_address_user_input = from_address_user_input
     suggestions = fetch_autocomplete_suggestions(from_address_user_input)
     from_address = col1.selectbox("Suggested Places - (From)", options=suggestions)
+    st.session_state.from_address_user_input = suggestions[0]
 
 
 if col1.checkbox("Current Location"):
+    lat = loc['coords']['latitude']
+    lon = loc['coords']['longitude']
+    from_address = f" {lat},{lon} ".strip()
     st.session_state.current_location = from_address
+    from_address_user_input = col1.text_input("**Current Location** ", value=st.session_state.current_location)
 else:
     st.session_state.current_location = ''
 
 
 
+to_places_help = '''
+        Common Destinations in Downtown:
+        - Grand Central Market
+        - Crypto.com Arena
+        - Walt Disney Concert Hall
+        - verve coffee roasters
+        '''
 
-to_address_user_input = col2.text_input("**To** - (e.g. Grand Central Market)", value="")
+to_address_user_input = col2.text_input("**To** - (e.g. Grand Central Market)", value="", help=to_places_help)
 
 if to_address_user_input:
     st.session_state.to_address_user_input = to_address_user_input
     suggestions = fetch_autocomplete_suggestions(to_address_user_input)
     to_address = col2.selectbox("Destination", options=suggestions)
+    st.session_state.to_address_user_input = suggestions[0]
 
 
 radius = col3.text_input("Number of Blocks Away You're Willing to Park - (e.g. 2)", value="")
@@ -548,10 +562,8 @@ if button_clicked or st.session_state.button_clicked:
 
                 
 
-
-
-
-
+# If they make a change they need to click on the "GO! 🔜" button again to rerun.
+st.session_state.button_clicked = False
 
 
 
