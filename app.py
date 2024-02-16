@@ -194,6 +194,7 @@ if button_clicked or st.session_state.button_clicked:
 
     st.session_state.button_clicked = True
 
+    # uses current location feature
     if st.session_state.current_location != '':
 
 
@@ -273,50 +274,71 @@ if button_clicked or st.session_state.button_clicked:
 
                 with st.spinner("Predicting for available street parking near your destination..."):
 
-                    for num in features_model_df.index:
+                    for num in features_model_df['spaceid']:
+                    
+                        model_inputs_dict = collecting_model_features(api_endpoint_weather= weather_key_api_endpoint)
+                        avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6 = calculate_avg_time_occupancy_previous_parkers(space_id=num)
 
-                        try:
+                        # model_inputs_array = transform_ml_model_features_input(
+                        #                         SpaceID=features_model_df.iloc[num]['spaceid'],
+                        #                         OccupancyState=features_model_df.iloc[num]['occupancystate'],
+                        #                         block_face=features_model_df.iloc[num]['block_face'],
+                        #                         meter_type= features_model_df.iloc[num]['meter_type'],
+                        #                         rate_type= features_model_df.iloc[num]['rate_type'],
+                        #                         rate_range= features_model_df.iloc[num]['rate_range'],
+                        #                         metered_time_limit= features_model_df.iloc[num]['metered_time_limit'] ,
+                        #                         day= model_inputs_dict['day'],
+                        #                         tempmax= model_inputs_dict['tempmax'],
+                        #                         tempmin= model_inputs_dict['tempmin'],
+                        #                         temp= model_inputs_dict['temp'],
+                        #                         feelslike= model_inputs_dict['feelslike'],
+                        #                         humidity= model_inputs_dict['humidity'],
+                        #                         weekday= model_inputs_dict['weekday'],
+                        #                         hour= model_inputs_dict['hour'],
+                        #                         minute= model_inputs_dict['minute'],
+                        #                         is_am= model_inputs_dict['is_am'],
+                        #                         is_work= model_inputs_dict['is_work'],
+                        #                         time_of_day_bin= model_inputs_dict['time_of_day_bin'],
+                        #                         is_weekend= model_inputs_dict['is_weekend'],
+                        #                         avg_time_in_occupancy_past_3= avg_time_in_occupancy_past_3 ,
+                        #                         avg_time_in_occupancy_past_6= avg_time_in_occupancy_past_6,
+                        #                         hour_weekday_interaction= model_inputs_dict['hour_weekday_interaction'],
+                        #                         weather_range= model_inputs_dict['weather_range'], 
+                        #                         lat= features_model_df.iloc[num]['lat'],
+                        #                         long= features_model_df.iloc[num]['lon']
+                        #                     )
 
-                            model_inputs_dict = collecting_model_features(api_endpoint_weather= weather_key_api_endpoint)
-                            avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6 = calculate_avg_time_occupancy_previous_parkers(space_id=features_model_df.iloc[num]['spaceid'])
-
-
-                            model_inputs_array = transform_ml_model_features_input(
-                                                    SpaceID=features_model_df.iloc[num]['spaceid'],
-                                                    OccupancyState=features_model_df.iloc[num]['occupancystate'],
-                                                    block_face=features_model_df.iloc[num]['block_face'],
-                                                    meter_type= features_model_df.iloc[num]['meter_type'],
-                                                    rate_type= features_model_df.iloc[num]['rate_type'],
-                                                    rate_range= features_model_df.iloc[num]['rate_range'],
-                                                    metered_time_limit= features_model_df.iloc[num]['metered_time_limit'] ,
-                                                    day= model_inputs_dict['day'],
-                                                    tempmax= model_inputs_dict['tempmax'],
-                                                    tempmin= model_inputs_dict['tempmin'],
-                                                    temp= model_inputs_dict['temp'],
-                                                    feelslike= model_inputs_dict['feelslike'],
-                                                    humidity= model_inputs_dict['humidity'],
-                                                    weekday= model_inputs_dict['weekday'],
-                                                    hour= model_inputs_dict['hour'],
-                                                    minute= model_inputs_dict['minute'],
-                                                    is_am= model_inputs_dict['is_am'],
-                                                    is_work= model_inputs_dict['is_work'],
-                                                    time_of_day_bin= model_inputs_dict['time_of_day_bin'],
-                                                    is_weekend= model_inputs_dict['is_weekend'],
-                                                    avg_time_in_occupancy_past_3= avg_time_in_occupancy_past_3 ,
-                                                    avg_time_in_occupancy_past_6= avg_time_in_occupancy_past_6,
-                                                    hour_weekday_interaction= model_inputs_dict['hour_weekday_interaction'],
-                                                    weather_range= model_inputs_dict['weather_range'], 
-                                                    lat= features_model_df.iloc[num]['lat'],
-                                                    long= features_model_df.iloc[num]['lon']
-                                                )
-                            
-                            
-                            pred = round(np.exp(xgb_model.predict(model_inputs_array))[0],1)
-                            predicted_time_available.append(pred)
-
-                        except:
-                            features_model_df.drop(index=num, inplace=True)
-                            #pass
+                        model_inputs_array = transform_ml_model_features_input(
+                                                SpaceID=num,
+                                                OccupancyState=features_model_df[features_model_df['spaceid'] == num]['occupancystate'].values[0],
+                                                block_face=features_model_df[features_model_df['spaceid'] == num]['block_face'].values[0],
+                                                meter_type= features_model_df[features_model_df['spaceid'] == num]['meter_type'].values[0],
+                                                rate_type= features_model_df[features_model_df['spaceid'] == num]['rate_type'].values[0],
+                                                rate_range= features_model_df[features_model_df['spaceid'] == num]['rate_range'].values[0],
+                                                metered_time_limit= features_model_df[features_model_df['spaceid'] == num]['metered_time_limit'].values[0],
+                                                day= model_inputs_dict['day'],
+                                                tempmax= model_inputs_dict['tempmax'],
+                                                tempmin= model_inputs_dict['tempmin'],
+                                                temp= model_inputs_dict['temp'],
+                                                feelslike= model_inputs_dict['feelslike'],
+                                                humidity= model_inputs_dict['humidity'],
+                                                weekday= model_inputs_dict['weekday'],
+                                                hour= model_inputs_dict['hour'],
+                                                minute= model_inputs_dict['minute'],
+                                                is_am= model_inputs_dict['is_am'],
+                                                is_work= model_inputs_dict['is_work'],
+                                                time_of_day_bin= model_inputs_dict['time_of_day_bin'],
+                                                is_weekend= model_inputs_dict['is_weekend'],
+                                                avg_time_in_occupancy_past_3= avg_time_in_occupancy_past_3 ,
+                                                avg_time_in_occupancy_past_6= avg_time_in_occupancy_past_6,
+                                                hour_weekday_interaction= model_inputs_dict['hour_weekday_interaction'],
+                                                weather_range= model_inputs_dict['weather_range'], 
+                                                lat= features_model_df[features_model_df['spaceid'] == num]['lat'].values[0],
+                                                long= features_model_df[features_model_df['spaceid'] == num]['lon'].values[0]
+                                            )
+                                             
+                        pred = round(np.exp(xgb_model.predict(model_inputs_array))[0],1)
+                        predicted_time_available.append(pred)
 
                     time.sleep(1)
 
@@ -333,9 +355,9 @@ if button_clicked or st.session_state.button_clicked:
                 # This dict collects the origin and destination from all available spots
                 spot_dict = {}
                 for index,row in features_model_df.iterrows():
-                    spot_dict[f"{row['Spot']}"] = (from_address_user_input, f"{row['lat']},{row['lon']}")
+                    spot_dict[row['Spot']] = (from_address_user_input, f"{row['lat']},{row['lon']}")
 
-
+                # This if-else checks if there is an optimal spot. if the shape == 0 there isn't one.
                 if features_model_df_2.shape[0] == 0:
                     st.caption("The model predicts that the available parking spots near your destination will be taken by the time you arrive 🤔. Try expanding the number of blocks away from your destination or run it again when you're approaching your destination!")
                     st.write(features_model_df[['Spot', f'ETA to {st.session_state.to_address_user_input} in Minutes', 
@@ -379,8 +401,7 @@ if button_clicked or st.session_state.button_clicked:
 
 
     #########################
-    # Manually Enters Address
-    #########################              
+    # Manually Enters Address             
     else:
 
         if st.session_state.from_address_user_input and st.session_state.to_address_user_input and st.session_state.radius:
@@ -436,6 +457,8 @@ if button_clicked or st.session_state.button_clicked:
 
                 available_parking_df = pd.concat([final_df[['lat', 'lon', 'type']], df ])
 
+                st.write(available_parking_df)
+
                 st.subheader(f"{len(street_parking_spaceid_in_proximity_list)} Available Street Parking Spots Near your Destination!")
                 st.text(f"🏁 distance in kilometers: {round(distance,1)} from {st.session_state.from_address_user_input} to {st.session_state.to_address_user_input}")
                 st.text(f"🚗 time in minutes: {round(duration)}, get there by {(datetime.now() + timedelta(minutes=duration)).time().strftime('%H:%M')}")
@@ -451,6 +474,10 @@ if button_clicked or st.session_state.button_clicked:
                 # Prepping data for model
                 features_model_df = final_df[['spaceid', 'occupancystate', 'block_face', 'meter_type', 'rate_type', 'rate_range', 'metered_time_limit', 'lat', 'lon']]
 
+                st.write(features_model_df)
+
+                # st.write(features_model_df[features_model_df['spaceid'] == features_model_df['spaceid'].values[0]]['occupancystate'].values[0])
+
 
                 predicted_time_available = []
 
@@ -460,49 +487,74 @@ if button_clicked or st.session_state.button_clicked:
                 # Display message to tell users the ML model is running
                 with st.spinner("Predicting for available street parking near your destination..."):
 
-                    for num in features_model_df.index:
+                    for num in features_model_df['spaceid']:
 
-                        try:
+                        model_inputs_dict = collecting_model_features(api_endpoint_weather= weather_key_api_endpoint)
+                        #avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6 = calculate_avg_time_occupancy_previous_parkers(space_id=features_model_df.iloc[num, 'spaceid'])
+                        avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6 = calculate_avg_time_occupancy_previous_parkers(space_id=num)
 
-                            model_inputs_dict = collecting_model_features(api_endpoint_weather= weather_key_api_endpoint)
-                            avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6 = calculate_avg_time_occupancy_previous_parkers(space_id=features_model_df.iloc[num]['spaceid'])
+                        # This function takes the inputs and encodes them
+                        # model_inputs_array = transform_ml_model_features_input(
+                        #                         SpaceID=features_model_df.iloc[num]['spaceid'],
+                        #                         OccupancyState=features_model_df.iloc[num]['occupancystate'],
+                        #                         block_face=features_model_df.iloc[num]['block_face'],
+                        #                         meter_type= features_model_df.iloc[num]['meter_type'],
+                        #                         rate_type= features_model_df.iloc[num]['rate_type'],
+                        #                         rate_range= features_model_df.iloc[num]['rate_range'],
+                        #                         metered_time_limit= features_model_df.iloc[num]['metered_time_limit'] ,
+                        #                         day= model_inputs_dict['day'],
+                        #                         tempmax= model_inputs_dict['tempmax'],
+                        #                         tempmin= model_inputs_dict['tempmin'],
+                        #                         temp= model_inputs_dict['temp'],
+                        #                         feelslike= model_inputs_dict['feelslike'],
+                        #                         humidity= model_inputs_dict['humidity'],
+                        #                         weekday= model_inputs_dict['weekday'],
+                        #                         hour= model_inputs_dict['hour'],
+                        #                         minute= model_inputs_dict['minute'],
+                        #                         is_am= model_inputs_dict['is_am'],
+                        #                         is_work= model_inputs_dict['is_work'],
+                        #                         time_of_day_bin= model_inputs_dict['time_of_day_bin'],
+                        #                         is_weekend= model_inputs_dict['is_weekend'],
+                        #                         avg_time_in_occupancy_past_3= avg_time_in_occupancy_past_3 ,
+                        #                         avg_time_in_occupancy_past_6= avg_time_in_occupancy_past_6,
+                        #                         hour_weekday_interaction= model_inputs_dict['hour_weekday_interaction'],
+                        #                         weather_range= model_inputs_dict['weather_range'], 
+                        #                         lat= features_model_df.iloc[num]['lat'],
+                        #                         long= features_model_df.iloc[num]['lon']
+                        #                     )
 
-                            # This function takes the inputs and encodes them
-                            model_inputs_array = transform_ml_model_features_input(
-                                                    SpaceID=features_model_df.iloc[num]['spaceid'],
-                                                    OccupancyState=features_model_df.iloc[num]['occupancystate'],
-                                                    block_face=features_model_df.iloc[num]['block_face'],
-                                                    meter_type= features_model_df.iloc[num]['meter_type'],
-                                                    rate_type= features_model_df.iloc[num]['rate_type'],
-                                                    rate_range= features_model_df.iloc[num]['rate_range'],
-                                                    metered_time_limit= features_model_df.iloc[num]['metered_time_limit'] ,
-                                                    day= model_inputs_dict['day'],
-                                                    tempmax= model_inputs_dict['tempmax'],
-                                                    tempmin= model_inputs_dict['tempmin'],
-                                                    temp= model_inputs_dict['temp'],
-                                                    feelslike= model_inputs_dict['feelslike'],
-                                                    humidity= model_inputs_dict['humidity'],
-                                                    weekday= model_inputs_dict['weekday'],
-                                                    hour= model_inputs_dict['hour'],
-                                                    minute= model_inputs_dict['minute'],
-                                                    is_am= model_inputs_dict['is_am'],
-                                                    is_work= model_inputs_dict['is_work'],
-                                                    time_of_day_bin= model_inputs_dict['time_of_day_bin'],
-                                                    is_weekend= model_inputs_dict['is_weekend'],
-                                                    avg_time_in_occupancy_past_3= avg_time_in_occupancy_past_3 ,
-                                                    avg_time_in_occupancy_past_6= avg_time_in_occupancy_past_6,
-                                                    hour_weekday_interaction= model_inputs_dict['hour_weekday_interaction'],
-                                                    weather_range= model_inputs_dict['weather_range'], 
-                                                    lat= features_model_df.iloc[num]['lat'],
-                                                    long= features_model_df.iloc[num]['lon']
-                                                )
-                            
-                            # Predicting Available Remaining Time
-                            pred = np.exp(xgb_model.predict(model_inputs_array))[0]
-                            predicted_time_available.append(pred)
-
-                        except:
-                            features_model_df.drop(index=num, inplace=True)
+                        model_inputs_array = transform_ml_model_features_input(
+                                                SpaceID=num,
+                                                OccupancyState=features_model_df[features_model_df['spaceid'] == num]['occupancystate'].values[0],
+                                                block_face=features_model_df[features_model_df['spaceid'] == num]['block_face'].values[0],
+                                                meter_type= features_model_df[features_model_df['spaceid'] == num]['meter_type'].values[0],
+                                                rate_type= features_model_df[features_model_df['spaceid'] == num]['rate_type'].values[0],
+                                                rate_range= features_model_df[features_model_df['spaceid'] == num]['rate_range'].values[0],
+                                                metered_time_limit= features_model_df[features_model_df['spaceid'] == num]['metered_time_limit'].values[0],
+                                                day= model_inputs_dict['day'],
+                                                tempmax= model_inputs_dict['tempmax'],
+                                                tempmin= model_inputs_dict['tempmin'],
+                                                temp= model_inputs_dict['temp'],
+                                                feelslike= model_inputs_dict['feelslike'],
+                                                humidity= model_inputs_dict['humidity'],
+                                                weekday= model_inputs_dict['weekday'],
+                                                hour= model_inputs_dict['hour'],
+                                                minute= model_inputs_dict['minute'],
+                                                is_am= model_inputs_dict['is_am'],
+                                                is_work= model_inputs_dict['is_work'],
+                                                time_of_day_bin= model_inputs_dict['time_of_day_bin'],
+                                                is_weekend= model_inputs_dict['is_weekend'],
+                                                avg_time_in_occupancy_past_3= avg_time_in_occupancy_past_3 ,
+                                                avg_time_in_occupancy_past_6= avg_time_in_occupancy_past_6,
+                                                hour_weekday_interaction= model_inputs_dict['hour_weekday_interaction'],
+                                                weather_range= model_inputs_dict['weather_range'], 
+                                                lat= features_model_df[features_model_df['spaceid'] == num]['lat'].values[0],
+                                                long= features_model_df[features_model_df['spaceid'] == num]['lon'].values[0]
+                                            )
+                        
+                        # Predicting Available Remaining Time
+                        pred = np.exp(xgb_model.predict(model_inputs_array))[0]
+                        predicted_time_available.append(pred)
 
                     # Wait a longer second
                     time.sleep(1)
@@ -521,7 +573,7 @@ if button_clicked or st.session_state.button_clicked:
                 # This dict collects the origin and destination from all available spots
                 spot_dict = {}
                 for index,row in features_model_df.iterrows():
-                    spot_dict[f"{row['Spot']}"] = (st.session_state.from_address_user_input, f"{row['lat']},{row['lon']}")
+                    spot_dict[row['Spot']] = (st.session_state.from_address_user_input, f"{row['lat']},{row['lon']}")
 
                 if features_model_df_2.shape[0] == 0:
                     st.caption("The model predicts that the available parking spots near your destination will be taken by the time you arrive 🤔. Try expanding the number of blocks away from your destination or run it again when you're approaching your destination!")

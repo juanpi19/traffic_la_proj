@@ -537,14 +537,15 @@ def calculate_avg_time_occupancy_previous_parkers(space_id: str):
     Takes a list of Space ID and calculates the avg time that the previous 3 and 6 people were parked
     
     '''
+
+    # calculating avg time
+    day = datetime.now().day 
     
-    # avg_time_in_occupancy_past_3 and avg_time_in_occupancy_past_6
-    #parking_meter_inventory_api_df = api_request(api_endpoint="e7h6-4a3e", api_name= 'socrata')
-
-
     # checking for empty str
     if not space_id:
-        return -1
+        avg_time_in_occupancy_past_3 = avg_time_in_occupancy_matrix[avg_time_in_occupancy_matrix['day'] == day]['avg_time_in_occupancy_past_3'].median()
+        avg_time_in_occupancy_past_6 = avg_time_in_occupancy_matrix[avg_time_in_occupancy_matrix['day'] == day]['avg_time_in_occupancy_past_6'].median()
+        return avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6
     
     
     # calculating avg time
@@ -579,4 +580,5 @@ def get_user_loc():
 
 
 
+print(avg_time_in_occupancy_matrix[avg_time_in_occupancy_matrix['day'] == datetime.now().day]['avg_time_in_occupancy_past_3'].median())
 
