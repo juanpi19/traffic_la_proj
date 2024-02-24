@@ -541,22 +541,17 @@ def calculate_avg_time_occupancy_previous_parkers(space_id: str):
     # calculating avg time
     day = datetime.now().day 
     
-    # checking for empty str
-    if not space_id:
+    # checking if the space_id that we passed is in the matrix
+    if space_id not in avg_time_in_occupancy_matrix['SpaceID'].tolist():
         avg_time_in_occupancy_past_3 = avg_time_in_occupancy_matrix[avg_time_in_occupancy_matrix['day'] == day]['avg_time_in_occupancy_past_3'].median()
         avg_time_in_occupancy_past_6 = avg_time_in_occupancy_matrix[avg_time_in_occupancy_matrix['day'] == day]['avg_time_in_occupancy_past_6'].median()
         return avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6
     
-    
-    # calculating avg time
-    day = datetime.now().day 
-
     # Mapping the value to its encoded value
     space_id_encoded = mapping_dict['SpaceID'][space_id]
 
     avg_time_in_occupancy_past_3 = avg_time_in_occupancy_matrix[(avg_time_in_occupancy_matrix['SpaceID'] == space_id_encoded) & (avg_time_in_occupancy_matrix['day'] == day)]['avg_time_in_occupancy_past_3'].values[0]
     avg_time_in_occupancy_past_6 = avg_time_in_occupancy_matrix[(avg_time_in_occupancy_matrix['SpaceID'] == space_id_encoded) & (avg_time_in_occupancy_matrix['day'] == day)]['avg_time_in_occupancy_past_6'].values[0]
-
 
     return avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6
 
@@ -580,5 +575,5 @@ def get_user_loc():
 
 
 
-print(avg_time_in_occupancy_matrix[avg_time_in_occupancy_matrix['day'] == datetime.now().day]['avg_time_in_occupancy_past_3'].median())
+print(type(mapping_dict['SpaceID'].keys()))
 
