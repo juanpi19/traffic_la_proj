@@ -37,9 +37,11 @@ def keeping_state(from_, to):
 with open('xgb_model_v1.pkl', 'rb') as pickle_file:
     xgb_model = pk.load(pickle_file)
 
+
 # This dictionary contains all the encoded values from the model training 
 with open('mapping_dictionary.pkl', 'rb') as pickle_file:
     mapping_dict = pk.load(pickle_file)
+
 
 ################
 # Top Part
@@ -288,12 +290,16 @@ if button_clicked or st.session_state.button_clicked:
                     # Pinging API to collect weather data 
                     model_inputs_dict = collecting_model_features(api_endpoint_weather= weather_key_api_endpoint)
 
+                    # Loop through every spaceid that is in proximity to the final destination
                     for num in features_model_df['spaceid']:
 
+                        # Here we check if the spaceid in proximity was used to train the ML model
                         if num in mapping_dict['SpaceID'].keys():
                     
+                            # here we calculate the average time in occupancy for the 3 and 6 last people who parked, these are features we need for the model
                             avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6 = calculate_avg_time_occupancy_previous_parkers(space_id=num)
 
+                            # here we call a function that will map all the inputs into the encoded versions that we used to train the model
                             model_inputs_array = transform_ml_model_features_input(
                                                     SpaceID=num,
                                                     OccupancyState=features_model_df[features_model_df['spaceid'] == num]['occupancystate'].values[0],
@@ -322,19 +328,20 @@ if button_clicked or st.session_state.button_clicked:
                                                     lat= features_model_df[features_model_df['spaceid'] == num]['lat'].values[0],
                                                     long= features_model_df[features_model_df['spaceid'] == num]['lon'].values[0]
                                                 )
-                                                
-                            pred = round(np.exp(xgb_model.predict(model_inputs_array))[0],1)
-                            predicted_time_available.append(pred)
 
+                            # here we make a prediction about how long an open spot will remain available            
+                            pred = round(np.exp(xgb_model.predict(model_inputs_array))[0],1)
+                            predicted_time_available.append(pred) # append that prediction to the list
+
+                        # if the model hasn't been trained on a specific space_id, I'll drop it
                         else:
-                            # if the model hasn't been trained on a specific space_id, I'll drop it
                             features_model_df.drop(features_model_df[features_model_df['spaceid'] == num].index, inplace=True)
 
                     time.sleep(1)
 
+                # Some info about the spots in proximity
                 st.divider()
                 st.subheader(f"Let's not waste time searching for parking... Park as soon as you arrive 😮‍💨")
-
                 features_model_df['Spot Remaining Available Time in Minutes'] = predicted_time_available
                 features_model_df[f'ETA to {st.session_state.to_address_user_input} in Minutes'] = round(duration)
                 features_model_df['Spot'] = [f'Spot {i+1}' for i in range(len(predicted_time_available))]
@@ -376,22 +383,22 @@ if button_clicked or st.session_state.button_clicked:
 
                 else:
                     
-                    # optimizing the best one
+                    # optimizing the best available spot one
                     st.write("This is the optimal spot :sunglasses:")
                     st.write(features_model_df_2[['Spot', f'ETA to {st.session_state.to_address_user_input} in Minutes', 
                                                   'Spot Remaining Available Time in Minutes', 
                                                   'rate_range', 'metered_time_limit']].sort_values(by='Spot Remaining Available Time in Minutes', ascending=False).head(1).set_index('Spot').T)
                     
-                    # on_click=open_page(url)
+                    # This allows you to go to the optimal spot, it will open a new window which uses google maps to take you right there
                     option = features_model_df_2['Spot'].values[0]
                     final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
                     if st.button("Go! 🔜"):
                         open_google_maps(from_place=final_destination[0], to_place=final_destination[1])
 
 
-
-    #########################
-    # Manually Enters Address             
+    #####
+    # Manually Enters Address, do not use the current location feature    
+    #####    
     else:
 
         if st.session_state.from_address_user_input and st.session_state.to_address_user_input and st.session_state.radius:
@@ -402,49 +409,57 @@ if button_clicked or st.session_state.button_clicked:
                 placeholder.empty()
                 st.session_state.initial_map = False
 
-                from_address_coordinates = get_coordinates(st.session_state.from_address_user_input) 
-                to_address_coordinates = get_coordinates(st.session_state.to_address_user_input)
+                from_address_coordinates = get_coordinates(st.session_state.from_address_user_input) # gets origin location coordinates
+                to_address_coordinates = get_coordinates(st.session_state.to_address_user_input)  # calls the get_coordinates function to convert the to_adress location into coordinates
 
                 if from_address_coordinates and to_address_coordinates:
                     
+                    # calls a function to calculate the distance and duration driving between the 2 points
                     distance, duration = calculates_distance_and_driving_time_from_point_a_to_point_b(from_address_coordinates, to_address_coordinates)
 
+                     # if both distance and duration are successfully calculated
                     if distance and duration:
-        
+
+                        # puts latitude and longitude from both from and to addresses into separate lists
                         lat = [float(from_address_coordinates.split(',')[0]), float(to_address_coordinates.split(',')[0])]
                         long = [float(from_address_coordinates.split(',')[1]), float(to_address_coordinates.split(',')[1])]
 
+                        # creates dataframe with the lists
                         df = pd.DataFrame({'lat': lat, 'lon': long, 'type': ['destination', 'destination']})
 
+                        # Pings api to get real time data on vacant parking spots
                         final_df = joins_street_parking_inventory_with_live_api_data()
                         final_df = final_df[final_df['occupancystate'] == 'VACANT']
 
+                        # ToDo: this is repeating?? could be omitted
                         destination_lat = float(to_address_coordinates.split(',')[0])
                         destination_lon = float(to_address_coordinates.split(',')[1])
 
+                        # this is a list that collects the spaceid that are in proximity to the destination
                         street_parking_spaceid_in_proximity_list = []
 
-
+                        # loop through the live parking spot we just pulled from the api
                         for index, row in final_df.iterrows():
 
+                            # Uses haversine distance to check which spaceids are within proximity to the radius you specified
                             if int(radius) * 100 >= haversine(destination_lat, destination_lon, float(row['lat']), float(row['long'])):
 
+                                # the spaceids in proximity are stored in the list
                                 street_parking_spaceid_in_proximity_list.append(row['spaceid'])
 
-
+            # this if-else checks if any spots were found in proximity
             if len(street_parking_spaceid_in_proximity_list) <= 0:
                 st.write("Sorry, we didn't find anything in proximity. Try increasing the radius!")
             
             else:
-
+                # filter spaceid dataframe to keep the ones in proximity only
                 final_df = final_df[final_df['spaceid'].isin(street_parking_spaceid_in_proximity_list)]
                 final_df['type'] = 'parking'
 
-
+                # concatenate both dataframes: df: contains user info, final_df: contains api data regarding spots availability
                 available_parking_df = pd.concat([final_df[['lat', 'lon', 'type']], df ])
 
-                # st.write(available_parking_df)
-
+                # displays the information regarding what's been found: distance, duration driving in minutes, num of parking spots available in proximity
                 st.subheader(f"{len(street_parking_spaceid_in_proximity_list)} Available Street Parking Spots Near your Destination!")
                 st.text(f"🏁 distance in kilometers: {round(distance,1)} from {st.session_state.from_address_user_input} to {st.session_state.to_address_user_input}")
                 st.text(f"🚗 time in minutes: {round(duration)}, get there by {(datetime.now() + timedelta(minutes=duration)).time().strftime('%H:%M')}")
@@ -457,9 +472,10 @@ if button_clicked or st.session_state.button_clicked:
                 st.caption("🔴 Origin and Destination 🔵 Available Street Parking Around your Destination")
 
 
-                # Prepping data for model
+                # Prepping data to feed the model the right inputs to make predictions, we keep only the columns (features) I need for the model
                 features_model_df = final_df[['spaceid', 'occupancystate', 'block_face', 'meter_type', 'rate_type', 'rate_range', 'metered_time_limit', 'lat', 'lon']]
 
+                # this list will store the predictions made for the available spots found in proximity
                 predicted_time_available = []
 
                 # Making some space for better UI
@@ -471,12 +487,16 @@ if button_clicked or st.session_state.button_clicked:
                     # Pinging API to collect weather data 
                     model_inputs_dict = collecting_model_features(api_endpoint_weather= weather_key_api_endpoint)
 
+                    # Loop through every spaceid that is in proximity to the final destination
                     for num in features_model_df['spaceid']:
 
+                        # Here we check if the spaceid in proximity was used to train the ML model
                         if num in mapping_dict['SpaceID'].keys():
 
+                            # here we calculate the average time in occupancy for the 3 and 6 last people who parked, these are features we need for the model
                             avg_time_in_occupancy_past_3, avg_time_in_occupancy_past_6 = calculate_avg_time_occupancy_previous_parkers(space_id=num)
 
+                            # here we call a function that will map all the inputs into the encoded versions that we used to train the model
                             model_inputs_array = transform_ml_model_features_input(
                                                     SpaceID=num,
                                                     OccupancyState=features_model_df[features_model_df['spaceid'] == num]['occupancystate'].values[0],
@@ -506,21 +526,20 @@ if button_clicked or st.session_state.button_clicked:
                                                     long= features_model_df[features_model_df['spaceid'] == num]['lon'].values[0]
                                                 )
                             
-                            # Predicting Available Remaining Time
+                            # # here we make a prediction about how long an open spot will remain available 
                             pred = np.exp(xgb_model.predict(model_inputs_array))[0]
-                            predicted_time_available.append(pred)
+                            predicted_time_available.append(pred) # append that prediction to the list
 
+                        # if the model hasn't been trained on a specific space_id, I'll drop it
                         else:
-                            # if the model hasn't been trained on a specific space_id, I'll drop it
                             features_model_df.drop(features_model_df[features_model_df['spaceid'] == num].index, inplace=True)
 
                     # Wait a longer second
                     time.sleep(1)
 
+                # Some info about the spots in proximity
                 st.divider()
                 st.subheader(f"Let's not Waste Time Searching for Parking... Park As Soon As You Arrive 😮‍💨")
-                
-
                 features_model_df['Spot Remaining Available Time in Minutes'] = predicted_time_available
                 features_model_df[f'ETA to {st.session_state.to_address_user_input} in Minutes'] = round(duration)
                 features_model_df['Spot'] = [f'Spot {i+1}' for i in range(features_model_df.shape[0])]
@@ -533,6 +552,7 @@ if button_clicked or st.session_state.button_clicked:
                 for index,row in features_model_df.iterrows():
                     spot_dict[row['Spot']] = (st.session_state.from_address_user_input, f"{row['lat']},{row['lon']}")
 
+                # This if-else checks if there is an optimal spot. if the shape == 0 there isn't one.
                 if features_model_df_2.shape[0] == 0:
                     st.caption("The model predicts that the available parking spots near your destination will be taken by the time you arrive 🤔. Try expanding the number of blocks away from your destination or run it again when you're approaching your destination!")
                     st.write(features_model_df[['Spot', f'ETA to {st.session_state.to_address_user_input} in Minutes', 
@@ -555,11 +575,6 @@ if button_clicked or st.session_state.button_clicked:
                                 
                             submit_button = st.form_submit_button("Go! 🔜")
 
-                            #option = features_model_df_2['Spot'].values
-                            #final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
-                            #st.write(spot_dict[option][0])
-
-
                             if submit_button:
                                 final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
                                 # st.write(final_destination)
@@ -573,7 +588,7 @@ if button_clicked or st.session_state.button_clicked:
                                                   'rate_range', 'metered_time_limit']].sort_values(by='Spot Remaining Available Time in Minutes', ascending=False).head(1).set_index('Spot').T)
                     
 
-                    # on_click=open_page(url)
+                    # This allows you to go to the optimal spot, it will open a new window which uses google maps to take you right there
                     option = features_model_df_2['Spot'].values[0]
                     final_destination = keeping_state(from_=spot_dict[option][0], to=spot_dict[option][1])
 
